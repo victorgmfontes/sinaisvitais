@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jogo de Simulação de Casos Clínicos (300 Pacientes) | VICTOR FONTES PRODUÇÕES</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy-deep: #0b2545;
+      --navy-mid: #0f4c81;
+      --teal-accent: #0d9488;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .vital-card {
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .vital-card.measured {
+      transform: translateY(-2px);
+    }
+
+    @keyframes scanPulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+
+    .measuring-pulse {
+      animation: scanPulse 0.6s infinite ease-in-out;
+    }
+
+    .option-btn {
+      transition: all 0.18s ease;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      transform: translateX(3px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-teal-200 selection:text-slate-900">
+
+  <!-- CABEÇALHO INSTITUCIONAL -->
+  <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Logo VICTOR FONTES PRODUÇÕES -->
+      <div class="flex items-center gap-3.5 min-w-0">
+        <a href="index.html" class="flex items-center shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 rounded-lg">
+          <img
+            id="brandLogoImg"
+            src="./logo-victor-fontes.png"
+            alt="VICTOR FONTES PRODUÇÕES"
+            class="h-10 sm:h-11 w-auto max-w-[205px] object-contain rounded-md bg-white px-1.5 py-0.5 border border-slate-200"
+          />
+          <div id="brandLogoFallback" class="hidden flex-col leading-none select-none px-2.5 py-1 rounded-lg bg-[#0b2545] text-white border border-slate-800">
+            <span class="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-white">VICTOR FONTES</span>
+            <span class="text-[9px] font-bold tracking-[0.22em] uppercase text-teal-300 mt-0.5 text-center">PRODUÇÕES</span>
+          </div>
+        </a>
+
+        <div class="hidden md:block h-8 w-px bg-slate-200 shrink-0"></div>
+
+        <div class="min-w-0">
+          <span class="block text-[11px] font-extrabold uppercase tracking-wider text-teal-700 truncate">Simulação Clínica à Beira-Leito • Victor Fontes, 2026</span>
+          <h1 class="text-sm sm:text-lg font-extrabold text-slate-900 truncate">
+            Raciocínio Clínico &amp; Aferição de Sinais Vitais
+          </h1>
+        </div>
+      </div>
+
+      <!-- Navegação e Áudio -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          id="toggleBeepBtn"
+          class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold cursor-pointer transition"
+          title="Ativar ou silenciar bipes do monitor multiparamétrico"
+        >
+          🔊 Som Monitor: ON
+        </button>
+        <a
+          href="index.html"
+          class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold border border-slate-200 transition"
+        >
+          ← Início
+        </a>
+        <a
+          href="apresentacao.html"
+          class="hidden sm:inline-flex px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 text-xs sm:text-sm font-bold border border-sky-200 transition"
+        >
+          Apresentação
+        </a>
+        <a
+          href="simulador.html"
+          class="hidden sm:inline-flex px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-900 text-xs sm:text-sm font-bold border border-teal-200 transition"
+        >
+          Simulador
+        </a>
+      </div>
+    </div>
+
+    <!-- BARRA DE PROGRESSO DA RODADA (10 PACIENTES SORTEADOS DE 300) -->
+    <div class="bg-[#0b2545] text-white border-t border-slate-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="font-mono-code px-3 py-1 rounded-lg bg-teal-500/20 border border-teal-400/30 text-teal-300 text-xs sm:text-sm font-extrabold">
+            Paciente <span id="roundProgressNum">1</span> de 10
+          </span>
+          <span class="text-xs sm:text-sm font-bold text-slate-200">
+            Pontuação da Rodada: <strong id="roundScoreText" class="font-mono-code text-emerald-300">0</strong> / 10
+          </span>
+          <span class="hidden lg:inline-flex items-center gap-1.5 text-xs text-slate-300 bg-white/10 px-2.5 py-1 rounded-full">
+            <span>Banco Total: <strong>300 pacientes</strong></span>
+            <span>•</span>
+            <span>Restantes sem repetir: <strong id="remainingPoolText">290</strong></span>
+          </span>
+        </div>
+
+        <button
+          type="button"
+          id="newRoundHeaderBtn"
+          class="px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-extrabold cursor-pointer transition shadow-2xs"
+        >
+          🔄 Nova Rodada (+10 Pacientes Aleatórios)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ÁREA PRINCIPAL DO JOGO -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- =================================================================== -->
+    <!-- TELA ATIVA DO PACIENTE (1 A 10)                                     -->
+    <!-- =================================================================== -->
+    <div id="activeCaseContainer" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- COLUNA ESQUERDA: PRONTUÁRIO & MONITOR MULTIPARAMÉTRICO -->
+      <div class="lg:col-span-7 space-y-5">
+
+        <!-- Prontuário de Admissão / Triagem -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+          <div class="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-slate-200">
+            <div class="flex items-center gap-3.5">
+              <div id="patientAvatarBadge" class="w-12 h-12 rounded-2xl bg-[#0b2545] text-teal-300 font-mono-code font-extrabold text-base flex items-center justify-center shrink-0">
+                #001
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h2 id="patientNameTitle" class="text-lg sm:text-xl font-extrabold text-slate-900">Paciente</h2>
+                  <span id="patientAgeSexBadge" class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200">
+                    -- anos
+                  </span>
+                </div>
+                <p id="patientSettingText" class="text-xs font-semibold text-teal-700 mt-0.5">
+                  Unidade de Pronto Atendimento / Enfermaria Clínica
+                </p>
+              </div>
+            </div>
+
+            <span id="patientIdPill" class="font-mono-code px-3 py-1 rounded-lg bg-sky-50 text-sky-900 border border-sky-200 text-xs font-extrabold">
+              Prontuário #001/300
+            </span>
+          </div>
+
+          <!-- Queixa Principal e Histórico -->
+          <div class="mt-4 space-y-3">
+            <div class="rounded-xl bg-amber-50/80 border border-amber-200 p-3.5">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-900 block mb-1">Queixa Principal &amp; Sinais Observados</span>
+              <p id="patientComplaintText" class="text-sm font-bold text-slate-900 leading-relaxed"></p>
+            </div>
+
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1">Antecedentes &amp; Contexto Clínico</span>
+              <p id="patientHistoryText" class="text-xs sm:text-sm text-slate-700 leading-relaxed"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Estação de Aferição à Beira-Leito (6 Parâmetros) -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+            <div>
+              <span class="text-xs font-extrabold uppercase tracking-wider text-sky-700 block">Instrumentos de Semiotécnica</span>
+              <h3 class="text-base sm:text-lg font-extrabold text-slate-900">Aferição dos Sinais Vitais &amp; Glicemia</h3>
+            </div>
+
+            <button
+              type="button"
+              id="measureAllBtn"
+              class="px-3.5 py-2 rounded-xl bg-[#0f4c81] hover:bg-[#0b2545] text-white text-xs font-extrabold cursor-pointer transition shadow-2xs"
+            >
+              ⚡ Aferir Todos os SSVV (Completo)
+            </button>
+          </div>
+
+          <!-- Grade 2x3 de Monitores -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+
+            <!-- 1. Pressão Arterial (PA) -->
+            <div id="card-pa" class="vital-card rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Pressão Arterial</span>
+                  <span class="font-mono-code text-[10px] font-bold text-slate-400">mmHg</span>
+                </div>
+                <p id="val-pa" class="font-mono-code text-xl font-extrabold text-slate-400 my-1">Não aferida</p>
+                <span id="tag-pa" class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200 text-slate-600">
+                  Aguardando manguito
+                </span>
+              </div>
+              <button
+                type="button"
+                data-measure="pa"
+                class="measure-btn mt-3 w-full py-2 px-3 rounded-lg bg-white hover:bg-sky-50 text-sky-900 border border-slate-300 text-xs font-extrabold cursor-pointer transition"
+              >
+                🩺 Aferir PA (Korotkoff)
+              </button>
+            </div>
+
+            <!-- 2. Frequência Cardíaca (FC) -->
+            <div id="card-fc" class="vital-card rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Freq. Cardíaca</span>
+                  <span class="font-mono-code text-[10px] font-bold text-slate-400">bpm</span>
+                </div>
+                <p id="val-fc" class="font-mono-code text-xl font-extrabold text-slate-400 my-1">Não aferida</p>
+                <span id="tag-fc" class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200 text-slate-600">
+                  Palpar pulso 60s
+                </span>
+              </div>
+              <button
+                type="button"
+                data-measure="fc"
+                class="measure-btn mt-3 w-full py-2 px-3 rounded-lg bg-white hover:bg-sky-50 text-sky-900 border border-slate-300 text-xs font-extrabold cursor-pointer transition"
+              >
+                💓 Verificar FC / Pulso
+              </button>
+            </div>
+
+            <!-- 3. Frequência Respiratória (FR) -->
+            <div id="card-fr" class="vital-card rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Freq. Respiratória</span>
+                  <span class="font-mono-code text-[10px] font-bold text-slate-400">irpm</span>
+                </div>
+                <p id="val-fr" class="font-mono-code text-xl font-extrabold text-slate-400 my-1">Não aferida</p>
+                <span id="tag-fr" class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200 text-slate-600">
+                  Observar discretamente
+                </span>
+              </div>
+              <button
+                type="button"
+                data-measure="fr"
+                class="measure-btn mt-3 w-full py-2 px-3 rounded-lg bg-white hover:bg-sky-50 text-sky-900 border border-slate-300 text-xs font-extrabold cursor-pointer transition"
+              >
+                🫁 Contar FR (60s)
+              </button>
+            </div>
+
+            <!-- 4. Temperatura Corporal (Tax) -->
+            <div id="card-temp" class="vital-card rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Temperatura (Tax)</span>
+                  <span class="font-mono-code text-[10px] font-bold text-slate-400">°C</span>
+                </div>
+                <p id="val-temp" class="font-mono-code text-xl font-extrabold text-slate-400 my-1">Não aferida</p>
+                <span id="tag-temp" class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200 text-slate-600">
+                  Padrão EBSERH
+                </span>
+              </div>
+              <button
+                type="button"
+                data-measure="temp"
+                class="measure-btn mt-3 w-full py-2 px-3 rounded-lg bg-white hover:bg-sky-50 text-sky-900 border border-slate-300 text-xs font-extrabold cursor-pointer transition"
+              >
+                🌡️ Medir Temperatura
+              </button>
+            </div>
+
+            <!-- 5. Saturação Periférica de O2 (SpO2) -->
+            <div id="card-spo2" class="vital-card rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Saturação (SpO₂)</span>
+                  <span class="font-mono-code text-[10px] font-bold text-slate-400">%</span>
+                </div>
+                <p id="val-spo2" class="font-mono-code text-xl font-extrabold text-slate-400 my-1">Não aferida</p>
+                <span id="tag-spo2" class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200 text-slate-600">
+                  Oximetria de pulso
+                </span>
+              </div>
+              <button
+                type="button"
+                data-measure="spo2"
+                class="measure-btn mt-3 w-full py-2 px-3 rounded-lg bg-white hover:bg-sky-50 text-sky-900 border border-slate-300 text-xs font-extrabold cursor-pointer transition"
+              >
+                📟 Checar SpO₂
+              </button>
+            </div>
+
+            <!-- 6. Glicemia Capilar (HGT) -->
+            <div id="card-hgt" class="vital-card rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Glicemia (HGT)</span>
+                  <span class="font-mono-code text-[10px] font-bold text-slate-400">mg/dL</span>
+                </div>
+                <p id="val-hgt" class="font-mono-code text-xl font-extrabold text-slate-400 my-1">Não aferida</p>
+                <span id="tag-hgt" class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200 text-slate-600">
+                  Punção lateral digital
+                </span>
+              </div>
+              <button
+                type="button"
+                data-measure="hgt"
+                class="measure-btn mt-3 w-full py-2 px-3 rounded-lg bg-white hover:bg-sky-50 text-sky-900 border border-slate-300 text-xs font-extrabold cursor-pointer transition"
+              >
+                🩸 Realizar HGT
+              </button>
+            </div>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- COLUNA DIREITA: DECISÃO CLÍNICA & FEEDBACK TÉCNICO -->
+      <div class="lg:col-span-5 space-y-5">
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+          <div class="pb-3 mb-4 border-b border-slate-200">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700 block">Julgamento Clínico de Enfermagem</span>
+            <h3 class="text-base sm:text-lg font-extrabold text-slate-900">Qual é o quadro clínico principal deste paciente?</h3>
+            <p id="measureHintText" class="text-xs text-slate-500 mt-1">
+              Afira pelo menos <strong>3 parâmetros vitais</strong> (ou todos os 6) para liberar a confirmação da hipótese clínica.
+            </p>
+          </div>
+
+          <!-- 4 Alternativas Clínicas -->
+          <div id="optionsContainer" class="space-y-2.5"></div>
+
+          <!-- Botão Confirmar Resposta -->
+          <div class="mt-4">
+            <button
+              type="button"
+              id="submitDiagnosisBtn"
+              disabled
+              class="w-full py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-extrabold text-sm cursor-pointer transition shadow-xs"
+            >
+              Confirmar Avaliação Clínica
+            </button>
+          </div>
+
+          <!-- Painel de Feedback Detalhado (Após Responder) -->
+          <div id="feedbackPanel" class="hidden mt-5 rounded-2xl p-4 sm:p-5 border-2">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span id="feedbackStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold"></span>
+              <span id="feedbackPatientCode" class="font-mono-code text-xs font-bold text-slate-500"></span>
+            </div>
+            <h4 id="feedbackTitle" class="text-base font-extrabold text-slate-900 mb-1.5"></h4>
+            <p id="feedbackExplanation" class="text-xs sm:text-sm text-slate-800 leading-relaxed"></p>
+
+            <div class="mt-3 pt-3 border-t border-slate-200/80">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1">Conduta Prioritária &amp; Práticas Seguras:</span>
+              <p id="feedbackConduct" class="text-xs font-semibold text-slate-700 leading-relaxed"></p>
+            </div>
+
+            <button
+              type="button"
+              id="nextPatientBtn"
+              class="mt-4 w-full py-3 px-4 rounded-xl bg-[#0b2545] hover:bg-[#0f4c81] text-white font-extrabold text-sm cursor-pointer transition shadow-sm"
+            >
+              Próximo Paciente (2 de 10) →
+            </button>
+          </div>
+        </section>
+
+        <!-- Cola Rápida de Referência Clínica -->
+        <section class="bg-slate-900 text-slate-200 rounded-2xl border border-slate-800 p-4 text-xs space-y-1.5">
+          <h4 class="font-extrabold text-teal-300 uppercase tracking-wider text-[11px]">Parâmetros de Referência Rápida (Adulto)</h4>
+          <p><strong>PA (SBC 2020):</strong> Normal &lt;120×80 | HAS 2 ≥140×90 | Crise ≥180×120 mmHg</p>
+          <p><strong>FC / FR:</strong> FC 60–100 bpm | FR 12–20 irpm (Eupneia)</p>
+          <p><strong>Temp (EBSERH):</strong> Hipotermia &lt;35,5°C | Afebril 35,5–36,9°C | Febre &gt;37,8°C</p>
+          <p><strong>SpO₂ / HGT:</strong> SpO₂ 95–98% (DPOC: 88–92%; Emergência &lt;85%) | HGT Jejum 70–99 mg/dL</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- TELA DE RESUMO DA RODADA (APÓS OS 10 PACIENTES)                     -->
+    <!-- =================================================================== -->
+    <section id="roundSummaryContainer" class="hidden max-w-5xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-lg p-6 sm:p-10">
+      <div class="text-center max-w-2xl mx-auto">
+        <span class="inline-block px-3.5 py-1 rounded-full bg-teal-100 text-teal-900 text-xs font-extrabold uppercase tracking-wider mb-3">
+          Rodada Concluída • VICTOR FONTES PRODUÇÕES
+        </span>
+        <h2 class="text-2xl sm:text-4xl font-extrabold text-[#0b2545]">
+          Desempenho na Simulação Clínica
+        </h2>
+        <p id="summaryPerformanceText" class="mt-2 text-sm sm:text-base text-slate-600"></p>
+
+        <div class="my-6 inline-flex items-center gap-6 px-8 py-4 rounded-2xl bg-slate-50 border border-slate-200">
+          <div>
+            <span class="text-xs font-extrabold uppercase text-slate-500 block">Acertos</span>
+            <span id="summaryScoreBig" class="font-mono-code text-4xl font-extrabold text-teal-700">0/10</span>
+          </div>
+          <div class="h-10 w-px bg-slate-200"></div>
+          <div>
+            <span class="text-xs font-extrabold uppercase text-slate-500 block">Aproveitamento</span>
+            <span id="summaryPercentBig" class="font-mono-code text-4xl font-extrabold text-[#0b2545]">0%</span>
+          </div>
+        </div>
+
+        <div>
+          <button
+            type="button"
+            id="playAgainRoundBtn"
+            class="px-6 py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-base sm:text-lg cursor-pointer transition shadow-md inline-flex items-center gap-2.5"
+          >
+            <span>🔄 Nova Rodada (+10 Pacientes Aleatórios)</span>
+          </button>
+          <p class="text-xs text-slate-500 mt-2">
+            Sorteia 10 novos pacientes inéditos do banco de 300 casos clínicos.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tabela Revisão dos 10 Casos da Rodada -->
+      <div class="mt-8 overflow-x-auto rounded-2xl border border-slate-200">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-[#0b2545] text-white">
+              <th class="py-3 px-4 font-extrabold">#</th>
+              <th class="py-3 px-4 font-extrabold">Paciente</th>
+              <th class="py-3 px-4 font-extrabold">Sinais Vitais &amp; HGT</th>
+              <th class="py-3 px-4 font-extrabold">Diagnóstico Correto</th>
+              <th class="py-3 px-4 font-extrabold text-center">Resultado</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- RODAPÉ -->
+  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 py-5 px-4 sm:px-6 lg:px-8 text-xs sm:text-sm mt-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+      <p><strong class="text-white">VICTOR FONTES PRODUÇÕES</strong> • Victor Fontes, 2026 — Banco com 300 Pacientes Simulados (Rodadas de 10 Casos Sortidos).</p>
+      <a href="index.html" class="text-teal-300 hover:text-teal-200 font-bold">← Voltar ao Portal Inicial</a>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MOTOR DO BANCO DE 300 PACIENTES & LÓGICA DE SIMULAÇÃO CLÍNICA         -->
+  <!-- ===================================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      /* -------------------------------------------------------------------
+       * 1. FALLBACK DA LOGO & ÁUDIO SUAVE DE MONITOR MULTIPARAMÉTRICO
+       * ------------------------------------------------------------------- */
+      const logoImg = document.getElementById("brandLogoImg");
+      const logoFallback = document.getElementById("brandLogoFallback");
+      function showLogoFallback() {
+        logoImg.classList.add("hidden");
+        logoFallback.classList.remove("hidden");
+        logoFallback.classList.add("flex");
+      }
+      logoImg.addEventListener("error", showLogoFallback);
+      if (logoImg.complete && logoImg.naturalWidth === 0) {
+        showLogoFallback();
+      }
+
+      let audioCtx = null;
+      let beepEnabled = true;
+      const toggleBeepBtn = document.getElementById("toggleBeepBtn");
+
+      function playMonitorBeep(isAlert = false) {
+        if (!beepEnabled) return;
+        try {
+          if (!audioCtx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) audioCtx = new AC();
+          }
+          if (!audioCtx) return;
+          if (audioCtx.state === "suspended") audioCtx.resume();
+
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = isAlert ? "triangle" : "sine";
+          osc.frequency.setValueAtTime(isAlert ? 880 : 620, now);
+          if (isAlert) {
+            osc.frequency.setValueAtTime(660, now + 0.08);
+          }
+
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.09, now + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } catch (err) {
+          // Ignora restrições de áudio antes de interação
+        }
+      }
+
+      toggleBeepBtn.addEventListener("click", () => {
+        beepEnabled = !beepEnabled;
+        toggleBeepBtn.textContent = beepEnabled ? "🔊 Som Monitor: ON" : "🔇 Som Monitor: OFF";
+      });
+
+      /* -------------------------------------------------------------------
+       * 2. GERADOR DETERMINÍSTICO DO BANCO DE 300 PACIENTES ÚNICOS
+       * ------------------------------------------------------------------- */
+      const FIRST_NAMES_F = [
+        "Maria", "Ana", "Francisca", "Antônia", "Adriana", "Juliana", "Márcia", "Fernanda",
+        "Patrícia", "Aline", "Sandra", "Camila", "Amanda", "Bruna", "Jéssica", "Letícia",
+        "Luciana", "Vanessa", "Mariana", "Gabriela", "Vera", "Vitória", "Larissa", "Cláudia",
+        "Beatriz", "Rita", "Luana", "Sônia", "Renata", "Eliane", "Helena", "Tereza",
+        "Marta", "Rosa", "Aparecida", "Conceição", "Lúcia", "Regina", "Simone", "Cristiane"
+      ];
+
+      const FIRST_NAMES_M = [
+        "José", "João", "Antônio", "Francisco", "Carlos", "Paulo", "Pedro", "Lucas",
+        "Luiz", "Marcos", "Luis", "Gabriel", "Rafael", "Daniel", "Marcelo", "Bruno",
+        "Eduardo", "Felipe", "Raimundo", "Rodrigo", "Manoel", "Mateus", "André", "Fernando",
+        "Fábio", "Leonardo", "Gustavo", "Guilherme", "Leandro", "Tiago", "Anderson", "Ricardo",
+        "Márcio", "Jorge", "Sebastião", "Alexandre", "Roberto", "Edson", "Diego", "Sérgio"
+      ];
+
+      const LAST_NAMES = [
+        "Silva", "Santos", "Oliveira", "Souza", "Rodrigues", "Ferreira", "Alves", "Pereira",
+        "Lima", "Gomes", "Costa", "Ribeiro", "Martins", "Carvalho", "Almeida", "Lopes",
+        "Soares", "Fernandes", "Vieira", "Barbosa", "Rocha", "Dias", "Nascimento", "Andrade",
+        "Moreira", "Nunes", "Marques", "Machado", "Mendes", "Freitas", "Cardoso", "Ramos",
+        "Gonçalves", "Santana", "Teixeira", "Araújo", "Pinto", "Correia", "Monteiro", "Moura"
+      ];
+
+      const SETTINGS = [
+        "Unidade de Pronto Atendimento (UPA) — Classificação de Risco",
+        "Pronto-Socorro Adulto — Sala de Observação",
+        "Enfermaria de Clínica Médica — Avaliação de Rotina",
+        "Unidade Básica de Saúde (UBS) — Acolhimento",
+        "Instituição de Longa Permanência para Idosos (ILPI)"
+      ];
+
+      // 15 Condições Clínicas Estruturadas (20 pacientes por condição = 300 pacientes)
+      const CONDITION_TEMPLATES = [
+        {
+          id: "crise_hipertensiva",
+          label: "Crise Hipertensiva (PA ≥ 180 × 120 mmHg)",
+          distractors: [
+            "Hipotensão Ortostática / Choque Hipovolêmico",
+            "Hipoglicemia Severa (Neuroglicopenia)",
+            "Normotensão / Estabilidade Clínica"
+          ],
+          ageRange: [48, 84],
+          complaints: [
+            "Cefaleia occipital intensa há 2 horas, tontura rotatória, escotomas visuais e sensação de aperto precordial.",
+            "Mal-estar súbito, zumbido nos ouvidos, náuseas e cefaleia pulsátil de forte intensidade.",
+            "Epistaxe anterior moderada acompanhada de cefaleia frontal e ansiedade."
+          ],
+          histories: [
+            "Hipertenso crônico, relata ter suspendido os anti-hipertensivos há 5 dias por conta própria.",
+            "Idoso com histórico de HAS mal controlada e dieta rica em sódio.",
+            "Paciente em acompanhamento ambulatorial, sem uso regular de losartana e hidroclorotiazida."
+          ],
+          genVitals: (s) => ({
+            pas: 184 + (s % 28),
+            pad: 120 + (s % 16),
+            fc: 88 + (s % 18),
+            fr: 18 + (s % 5),
+            temp: +(36.4 + (s % 5) * 0.1).toFixed(1),
+            spo2: 95 + (s % 4),
+            hgt: 98 + (s % 25)
+          }),
+          explanation: "Valores de PA ≥ 180 × 120 mmHg configuram Crise Hipertensiva conforme as Diretrizes Brasileiras de Hipertensão (SBC, 2020).",
+          conduct: "Manter paciente em repouso com cabeceira elevada, confirmar PA em ambos os braços com manguito adequado (75–100%), monitorizar sinais neurológicos/dor torácica e acionar avaliação médica imediata."
+        },
+        {
+          id: "has_estagio_2",
+          label: "Hipertensão Arterial Estágio 2 (PA ≥ 140 × 90 mmHg)",
+          distractors: [
+            "Crise Hipertensiva (PA ≥ 180 × 120 mmHg)",
+            "Sepse / Choque Séptico",
+            "Bradicardia Sintomática"
+          ],
+          ageRange: [42, 78],
+          complaints: [
+            "Comparece para consulta de enfermagem assintomático ou com leve sensação de peso na nuca.",
+            "Refere cansaço aos grandes esforços e solicita verificação de rotina da pressão arterial.",
+            "Acompanhamento de rotina na UBS; nega dor torácica, dispneia ou déficit neurológico."
+          ],
+          histories: [
+            "Sedentário, sobrepeso, histórico familiar positivo para hipertensão arterial sistêmica.",
+            "Diagnóstico prévio de HAS, em uso irregular de enalapril 10 mg.",
+            "Cumpridos os pré-requisitos: repouso de 5 min, bexiga vazia, sem café/cigarro há 30 min."
+          ],
+          genVitals: (s) => ({
+            pas: 146 + (s % 22),
+            pad: 92 + (s % 14),
+            fc: 74 + (s % 18),
+            fr: 15 + (s % 4),
+            temp: +(36.3 + (s % 5) * 0.1).toFixed(1),
+            spo2: 96 + (s % 3),
+            hgt: 94 + (s % 24)
+          }),
+          explanation: "PA sistólica ≥ 140 mmHg e/ou diastólica ≥ 90 mmHg (abaixo de 180×120 mmHg) caracteriza Hipertensão Arterial Estágio 2 (SBC, 2020).",
+          conduct: "Registrar a medida no prontuário, confirmar cumprimento do protocolo pré-aferição (braço ao nível do coração, pernas descruzadas), orientar adesão medicamentosa e encaminhar para consulta médica/enfermagem."
+        },
+        {
+          id: "hipotensao_hipovolemia",
+          label: "Hipotensão Arterial / Choque Hipovolêmico",
+          distractors: [
+            "Hipertensão Arterial Estágio 2",
+            "Hiperpirexia (> 40,0 °C)",
+            "Estado Subfebril / Infecção Leve"
+          ],
+          ageRange: [24, 82],
+          complaints: [
+            "Tontura intensa ao levantar, fraqueza generalizada, palidez cutânea, pele fria e pegajosa.",
+            "Episódios repetidos de diarreia líquida e vômitos há 24 horas, com lipotimia ao ortostatismo.",
+            "Sede intensa, mucosas secas, tontura e visão turva após perda volêmica."
+          ],
+          histories: [
+            "Gastroenterite aguda com baixa ingesta hídrica nas últimas 24 horas.",
+            "Idoso em uso de diurético de alça sem reposição hídrica adequada em dias quentes.",
+            "Histórico de sangramento digestivo recente; extremidades frias e enchimento capilar lentificado."
+          ],
+          genVitals: (s) => ({
+            pas: 78 + (s % 14),
+            pad: 46 + (s % 12),
+            fc: 112 + (s % 22),
+            fr: 22 + (s % 5),
+            temp: +(35.8 + (s % 6) * 0.1).toFixed(1),
+            spo2: 93 + (s % 4),
+            hgt: 84 + (s % 22)
+          }),
+          explanation: "Pressão arterial reduzida (PAS < 90 mmHg) associada a taquicardia compensatória (> 100 bpm) e taquipneia (> 20 irpm) indica hipovolemia/instabilidade hemodinâmica.",
+          conduct: "Manter paciente em decúbito dorsal (posição supina), monitorizar SSVV continuamente, providenciar acesso venoso calibroso e comunicar equipe médica para reposição volêmica imediata."
+        },
+        {
+          id: "sepse_choque_septico",
+          label: "Sepse / Disfunção Orgânica Infecciosa",
+          distractors: [
+            "Normotensão / Estabilidade Clínica",
+            "Crise Hipertensiva",
+            "Bradicardia Sintomática"
+          ],
+          ageRange: [55, 89],
+          complaints: [
+            "Prostração súbita, confusão mental aguda, calafrios intensos e queda do estado geral.",
+            "Disúria há 3 dias evoluindo hoje com sonolência, extremidades rendilhadas e falta de ar.",
+            "Tosse produtiva, letargia importante e redução acentuada do débito urinário."
+          ],
+          histories: [
+            "Idoso com foco infeccioso urinário ou pulmonar recente, evoluindo com sinais de SIRS e hipotensão.",
+            "Paciente imunossuprimido com infecção de pele/partes moles em progressão.",
+            "Residente de ILPI com quadro infeccioso agudo e alteração do nível de consciência."
+          ],
+          genVitals: (s) => ({
+            pas: 82 + (s % 12),
+            pad: 48 + (s % 10),
+            fc: 118 + (s % 20),
+            fr: 25 + (s % 6),
+            temp: s % 3 === 0 ? +(35.0 + (s % 4) * 0.1).toFixed(1) : +(38.8 + (s % 9) * 0.1).toFixed(1),
+            spo2: 89 + (s % 5),
+            hgt: 138 + (s % 45)
+          }),
+          explanation: "A tríade de taquipneia (FR ≥ 22 irpm), hipotensão (PAS ≤ 100 mmHg) e alteração térmica (febre alta > 38,3°C ou hipotermia < 35,5°C) com taquicardia sinaliza Sepse (critérios qSOFA/SIRS).",
+          conduct: "Abrir protocolo de Sepse imediatamente (Hora Ouro), ofertar oxigênio suplementar conforme SpO₂, garantir dois acessos venosos e acionar médico para hemoculturas, lactato, antibiótico e volume."
+        },
+        {
+          id: "hipoglicemia_severa",
+          label: "Hipoglicemia Severa (< 55 mg/dL)",
+          distractors: [
+            "Hiperglicemia / Descompensação Diabética",
+            "Hipotermia Moderada (< 35,0 °C)",
+            "DPOC Descompensado"
+          ],
+          ageRange: [28, 81],
+          complaints: [
+            "Sudorese fria profusa, tremores nas mãos, palidez, palpitações e confusão mental súbita.",
+            "Sonolência excessiva, fala arrastada, tontura e visão turva no período da manhã.",
+            "Agitação psicomotora seguida de torpor leve e sudorese pegajosa."
+          ],
+          histories: [
+            "Diabético tipo 1 ou 2 em uso de insulina NPH/Regular; aplicou dose matinal e não realizou o desjejum.",
+            "Idoso diabético em uso de sulfonilureia (glibenclamida) com baixa aceitação alimentar ontem.",
+            "Realizou atividade física intensa sem ajuste da dose de insulina."
+          ],
+          genVitals: (s) => ({
+            pas: 112 + (s % 18),
+            pad: 70 + (s % 12),
+            fc: 108 + (s % 18),
+            fr: 19 + (s % 4),
+            temp: +(35.9 + (s % 5) * 0.1).toFixed(1),
+            spo2: 96 + (s % 3),
+            hgt: 38 + (s % 16)
+          }),
+          explanation: "Glicemia capilar (HGT) < 55 mg/dL confirma Hipoglicemia Severa, explicando os sintomas adrenérgicos (tremores, sudorese fria, taquicardia) e neuroglicopênicos (confusão mental).",
+          conduct: "Se consciente e com reflexo de deglutição preservado, aplicar Regra dos 15g de carboidrato simples e reavaliar HGT em 15 min. Se rebaixado, não ofertar via oral e administrar glicose hipertônica EV conforme prescrição."
+        },
+        {
+          id: "hiperglicemia_descompensada",
+          label: "Hiperglicemia / Descompensação Diabética",
+          distractors: [
+            "Hipoglicemia Severa (< 55 mg/dL)",
+            "Bradicardia Sintomática",
+            "Normotensão / Estabilidade Clínica"
+          ],
+          ageRange: [19, 76],
+          complaints: [
+            "Sede intensa (polidipsia), aumento do volume urinário (poliúria), náuseas, dor abdominal e hálito cetônico.",
+            "Fraqueza progressiva, boca seca, respiração profunda e rápida (Kussmaul) há 12 horas.",
+            "Poliúria, perda ponderal recente, sonolência e desidratação de mucosas."
+          ],
+          histories: [
+            "Diabetes Mellitus tipo 1 com interrupção involuntária da insulinoterapia por 48 horas.",
+            "Diabético tipo 2 descompensado após quadro infeccioso respiratório.",
+            "Sem diagnóstico prévio conhecido, apresentando desidratação hiperosmolar."
+          ],
+          genVitals: (s) => ({
+            pas: 104 + (s % 18),
+            pad: 66 + (s % 12),
+            fc: 106 + (s % 16),
+            fr: 24 + (s % 6),
+            temp: +(36.6 + (s % 8) * 0.1).toFixed(1),
+            spo2: 95 + (s % 4),
+            hgt: 335 + (s % 110)
+          }),
+          explanation: "Glicemia capilar muito elevada (> 300 mg/dL) associada a taquipneia compensatória, desidratação e poliúria/polidipsia indica Descompensação Diabética (risco de Cetoacidose ou EHH).",
+          conduct: "Comunicar imediatamente equipe médica, monitorizar SSVV e balanço hídrico rigoroso, puncionar acesso venoso para hidratação com SF 0,9% e insulinoterapia regular conforme protocolo."
+        },
+        {
+          id: "dpoc_descompensado",
+          label: "DPOC Descompensado (SpO₂ abaixo do alvo 88–92%)",
+          distractors: [
+            "Normotensão / Estabilidade Clínica",
+            "Hipoglicemia Severa (< 55 mg/dL)",
+            "Hipotermia Moderada (< 35,0 °C)"
+          ],
+          ageRange: [62, 88],
+          complaints: [
+            "Falta de ar progressiva aos mínimos esforços, tosse produtiva com escarro purulento e sibilos audíveis.",
+            "Dispneia intensa, uso de musculatura acessória cervical e tórax em tonel.",
+            "Cansaço respiratório, ortopneia e dificuldade para completar frases."
+          ],
+          histories: [
+            "Idoso ex-tabagista (carga tabágica 50 maços-ano) com diagnóstico confirmado de DPOC.",
+            "Pneumopata crônico com infecção viral recente desencadeando broncoespasmo.",
+            "Lembrar do Guia Técnico: em idosos com DPOC, o alvo clínico tolerável de SpO₂ é de 88% a 92%."
+          ],
+          genVitals: (s) => ({
+            pas: 132 + (s % 18),
+            pad: 82 + (s % 10),
+            fc: 104 + (s % 14),
+            fr: 25 + (s % 5),
+            temp: +(37.1 + (s % 8) * 0.1).toFixed(1),
+            spo2: 83 + (s % 4),
+            hgt: 102 + (s % 22)
+          }),
+          explanation: "O idoso com DPOC possui alvo clínico tolerável de SpO₂ entre 88% e 92%. Valores ≤ 86% com taquipneia (> 20 irpm) e dispneia caracterizam exacerbação/descompensação da DPOC.",
+          conduct: "Posicionar em Fowler elevado (45°–60°), ofertar oxigenoterapia controlada (cateter nasal baixo fluxo ou máscara de Venturi) titulado estritamente para manter SpO₂ entre 88% e 92%, evitando hiperóxia."
+        },
+        {
+          id: "insuficiencia_respiratoria_aguda",
+          label: "Insuficiência Respiratória Aguda / Hipóxia Grave (SpO₂ < 85%)",
+          distractors: [
+            "Estado Subfebril / Infecção Leve",
+            "Hipertensão Arterial Estágio 2",
+            "Bradipneia por Depressão Respiratória"
+          ],
+          ageRange: [30, 85],
+          complaints: [
+            "Dispneia súbita intensa, cianose labial e de leito ungueal, agitação e tiragem intercostal.",
+            "Fome de ar severa, sudorese, incapacidade de permanecer deitado e batimento de asa de nariz.",
+            "Desconforto respiratório agudo com queda acentuada da oximetria."
+          ],
+          histories: [
+            "Quadro agudo de pneumonia grave / edema agudo / tromboembolismo pulmonar.",
+            "Sem histórico de DPOC; paciente previamente hígido com hipoxemia crítica.",
+            "Guia Técnico: valores de SpO₂ < 85% indicam emergência clínica com risco iminente de falência orgânica."
+          ],
+          genVitals: (s) => ({
+            pas: 138 + (s % 24),
+            pad: 86 + (s % 12),
+            fc: 122 + (s % 18),
+            fr: 30 + (s % 8),
+            temp: +(37.2 + (s % 12) * 0.1).toFixed(1),
+            spo2: 77 + (s % 7),
+            hgt: 110 + (s % 28)
+          }),
+          explanation: "SpO₂ < 85% associada a taquipneia importante (> 28 irpm) e taquicardia representa Emergência Clínica com risco iminente de falência orgânica por hipóxia tecidual.",
+          conduct: "Posicionar em Fowler alto, administrar oxigenoterapia de alto fluxo (máscara não reinalante) conforme protocolo, monitorizar continuamente e acionar equipe médica de emergência."
+        },
+        {
+          id: "bradicardia_sintomatica",
+          label: "Bradicardia Sintomática (FC < 50 bpm)",
+          distractors: [
+            "Taquicardia Supraventricular (FC > 145 bpm)",
+            "Febre Alta / Hiperpirexia",
+            "Hiperglicemia / Descompensação Diabética"
+          ],
+          ageRange: [58, 88],
+          complaints: [
+            "Tontura intensa, escurecimento visual, sensação de desmaio (pré-síncope) e fadiga extrema.",
+            "Astenia súbita, lentidão e episódios de lipotimia ao caminhar dentro de casa.",
+            "Mal-estar e tontura persistente; pulso radial lento e amplo."
+          ],
+          histories: [
+            "Idoso cardiopata em uso de betabloqueador (atenolol) associado a digoxina.",
+            "Possível bloqueio atrioventricular ou intoxicação digitálica em investigação.",
+            "Guia Técnico: Frequência Cardíaca normal é 60–100 bpm; valores < 60 bpm definem Bradicardia."
+          ],
+          genVitals: (s) => ({
+            pas: 94 + (s % 16),
+            pad: 58 + (s % 10),
+            fc: 38 + (s % 11),
+            fr: 15 + (s % 4),
+            temp: +(36.1 + (s % 5) * 0.1).toFixed(1),
+            spo2: 94 + (s % 4),
+            hgt: 92 + (s % 20)
+          }),
+          explanation: "Frequência cardíaca < 60 bpm (neste caso < 50 bpm) acompanhada de sintomas de baixo débito (tontura, pré-síncope, hipotensão limítrofe) caracteriza Bradicardia Sintomática.",
+          conduct: "Manter paciente em repouso no leito (prevenção de quedas/síncope), realizar ECG de 12 derivações, monitorizar ritmo cardíaco e PA e comunicar imediatamente ao médico."
+        },
+        {
+          id: "taquicardia_taquiarritmia",
+          label: "Taquiarritmia / Taquicardia Sintomática (FC > 145 bpm)",
+          distractors: [
+            "Bradicardia Sintomática (FC < 50 bpm)",
+            "Hipotermia Moderada (< 35,0 °C)",
+            "Normotensão / Estabilidade Clínica"
+          ],
+          ageRange: [22, 74],
+          complaints: [
+            "Palpitações taquicárdicas de início súbito ('coração disparado no pescoço'), falta de ar leve e ansiedade.",
+            "Batedeira no peito há 40 minutos, desconforto torácico leve e tontura.",
+            "Sensação de aceleração cardíaca intensa mesmo em repouso absoluto."
+          ],
+          histories: [
+            "Paciente afebril, sem infecção ou hipovolemia aparente, com pulso radial muito rápido e fino.",
+            "Episódios prévios semelhantes de início e término abruptos.",
+            "Guia Técnico: FC > 100 bpm define Taquicardia; valores > 145 bpm em repouso sugerem taquiarritmia."
+          ],
+          genVitals: (s) => ({
+            pas: 108 + (s % 18),
+            pad: 72 + (s % 12),
+            fc: 152 + (s % 28),
+            fr: 21 + (s % 4),
+            temp: +(36.4 + (s % 4) * 0.1).toFixed(1),
+            spo2: 95 + (s % 4),
+            hgt: 96 + (s % 18)
+          }),
+          explanation: "Frequência cardíaca acentuadamente elevada (> 145 bpm) em paciente afebril e sem choque hipovolêmico aponta para Taquiarritmia primária.",
+          conduct: "Manter paciente em repouso, monitorizar continuamente (ECG de 12 derivações e oximetria), verificar sinais de instabilidade hemodinâmica e acionar equipe médica."
+        },
+        {
+          id: "hipotermia",
+          label: "Hipotermia (< 35,5 °C — Padrão EBSERH)",
+          distractors: [
+            "Febre Alta / Hiperpirexia (> 39,0 °C)",
+            "Crise Hipertensiva",
+            "Hiperglicemia / Descompensação Diabética"
+          ],
+          ageRange: [65, 92],
+          complaints: [
+            "Sonolência, fala lentificada, pele pálida e muito fria ao toque, tremores discretos.",
+            "Idoso encontrado em ambiente frio durante a madrugada com lentidão psicomotora e extremidades geladas.",
+            "Apatia, bradicardia leve e temperatura axilar reduzida."
+          ],
+          histories: [
+            "Idoso frágil com perda de massa muscular e exposição prolongada ao frio sem agasalho adequado.",
+            "Pós-operatório recente ou desnutrição calórico-proteica em idoso.",
+            "Padrão EBSERH (POP.DENF.038): temperatura axilar abaixo de 35,5 °C define Hipotermia."
+          ],
+          genVitals: (s) => ({
+            pas: 102 + (s % 16),
+            pad: 62 + (s % 10),
+            fc: 52 + (s % 10),
+            fr: 11 + (s % 3),
+            temp: +(34.2 + (s % 11) * 0.1).toFixed(1),
+            spo2: 92 + (s % 4),
+            hgt: 82 + (s % 18)
+          }),
+          explanation: "Temperatura axilar < 35,5 °C configura Hipotermia (EBSERH, 2025), frequentemente acompanhada de redução da FC, da FR e da perfusão periférica.",
+          conduct: "Promover aquecimento passivo e ativo gradual (cobertores térmicos, ambiente aquecido, líquidos mornos se consciente), monitorizar temperatura a cada 15–30 min e avaliar glicemia."
+        },
+        {
+          id: "febre_alta_hiperpirexia",
+          label: "Febre Alta / Hiperpirexia (> 39,0 °C — EBSERH)",
+          distractors: [
+            "Hipotermia (< 35,5 °C — Padrão EBSERH)",
+            "Bradicardia Sintomática",
+            "Hipoglicemia Severa (< 55 mg/dL)"
+          ],
+          ageRange: [18, 72],
+          complaints: [
+            "Calafrios intensos, mialgia difusa, cefaleia, pele muito quente, rubor facial e sudorese.",
+            "Prostração aguda, sede e sensação de calor intenso há 6 horas.",
+            "Mal-estar intenso com elevação acentuada da temperatura corporal."
+          ],
+          histories: [
+            "Quadro infeccioso agudo (amigdalite bacteriana, arbovirose ou pneumonia comunitária) sem sinais de choque.",
+            "Padrão EBSERH: Febre Alta > 39,0 °C e Hiperpirexia > 40,0 °C.",
+            "A elevação térmica aumenta fisiologicamente a FC (~10 bpm por °C) e a FR."
+          ],
+          genVitals: (s) => ({
+            pas: 116 + (s % 18),
+            pad: 72 + (s % 10),
+            fc: 108 + (s % 16),
+            fr: 22 + (s % 4),
+            temp: +(39.2 + (s % 12) * 0.1).toFixed(1),
+            spo2: 95 + (s % 4),
+            hgt: 104 + (s % 22)
+          }),
+          explanation: "Temperatura axilar > 39,0 °C (Febre Alta) ou > 40,0 °C (Hiperpirexia) segundo o POP.DENF.038 da EBSERH, com taquicardia e taquipneia secundárias ao hipermetabolismo.",
+          conduct: "Administrar antitérmico conforme prescrição médica, estimular hidratação oral, aplicar medidas físicas de resfriamento (compressas mornas, roupas leves) e reavaliar Tax em 30–60 min."
+        },
+        {
+          id: "estado_subfebril",
+          label: "Estado Subfebril (37,0 °C – 37,7 °C — EBSERH)",
+          distractors: [
+            "Hiperpirexia (> 40,0 °C)",
+            "Choque Séptico / Instabilidade Grave",
+            "Insuficiência Respiratória Aguda"
+          ],
+          ageRange: [21, 75],
+          complaints: [
+            "Corpo 'quente', leve indisposição, coriza e dor de garganta discreta desde ontem.",
+            "Sensação de febrícula vespertina sem calafrios nem prostração importante.",
+            "Queixa de desconforto leve em pós-operatório recente; sinais hemodinâmicos estáveis."
+          ],
+          histories: [
+            "Quadro viral leve de vias aéreas superiores ou resposta inflamatória inicial.",
+            "Padrão EBSERH (2025): o intervalo entre 37,0 °C e 37,7 °C é classificado como Estado Subfebril (febre apenas > 37,8 °C).",
+            "Demais sinais vitais encontram-se dentro dos parâmetros de normalidade."
+          ],
+          genVitals: (s) => ({
+            pas: 114 + (s % 14),
+            pad: 72 + (s % 10),
+            fc: 82 + (s % 14),
+            fr: 16 + (s % 3),
+            temp: +(37.1 + (s % 7) * 0.1).toFixed(1),
+            spo2: 97 + (s % 2),
+            hgt: 90 + (s % 18)
+          }),
+          explanation: "Segundo o POP.DENF.038 da EBSERH, temperaturas entre 37,0 °C e 37,7 °C definem Estado Subfebril (abaixo do limiar de febre > 37,8 °C), com estabilidade hemodinâmica.",
+          conduct: "Manter observação clínica e curva térmica seriada, estimular hidratação oral e evitar hipermedicalização desnecessária antes da avaliação."
+        },
+        {
+          id: "bradipneia_depressao",
+          label: "Bradipneia / Depressão Respiratória (FR < 12 irpm)",
+          distractors: [
+            "Taquipneia por Crise de Ansiedade",
+            "Crise Hipertensiva",
+            "Febre Alta / Hiperpirexia"
+          ],
+          ageRange: [34, 83],
+          complaints: [
+            "Sonolência profunda, dificuldade para manter os olhos abertos e movimentos respiratórios muito lentos e superficiais.",
+            "Paciente pouco responsivo a chamados verbais, com pausas prolongadas entre as inspirações.",
+            "Torpor e redução evidente da expansibilidade torácica."
+          ],
+          histories: [
+            "Pós-operatório em uso de analgesia com opioide (morfina/fentanil) ou sedativos.",
+            "Idoso com acúmulo medicamentoso de benzodiazepínicos.",
+            "Guia Técnico: FR normal é 12–20 irpm; valores < 12 irpm definem Bradipneia e exigem contagem discreta por 60s."
+          ],
+          genVitals: (s) => ({
+            pas: 100 + (s % 16),
+            pad: 62 + (s % 10),
+            fc: 58 + (s % 12),
+            fr: 7 + (s % 4),
+            temp: +(36.0 + (s % 5) * 0.1).toFixed(1),
+            spo2: 86 + (s % 5),
+            hgt: 88 + (s % 18)
+          }),
+          explanation: "Frequência respiratória < 12 irpm (Bradipneia) acompanhada de sonolência e queda da SpO₂ indica Depressão do Centro Respiratório.",
+          conduct: "Estimular verbalmente o paciente, suspender infusão de opioide/sedativo suspeito, ofertar oxigênio suplementar, manter material de via aérea acessível e acionar médico imediatamente."
+        },
+        {
+          id: "estabilidade_clinica",
+          label: "Normotensão & Estabilidade Clínica (Parâmetros Normais)",
+          distractors: [
+            "Sepse / Choque Séptico",
+            "Crise Hipertensiva",
+            "Hipoglicemia Severa (< 55 mg/dL)"
+          ],
+          ageRange: [20, 80],
+          complaints: [
+            "Comparece para avaliação pré-operatória / check-up de rotina, sentindo-se bem e assintomático.",
+            "Alta hospitalar programada; nega dor, dispneia, tontura ou mal-estar.",
+            "Acompanhamento periódico na atenção primária; sem queixas agudas."
+          ],
+          histories: [
+            "Cumpridos todos os pré-requisitos: repouso de 5 minutos, bexiga vazia, postura correta e silêncio.",
+            "Sem comorbidades descompensadas; alimentação regular há 3 horas.",
+            "Todos os parâmetros vitais encontram-se dentro das faixas fisiológicas de referência."
+          ],
+          genVitals: (s) => ({
+            pas: 110 + (s % 9),
+            pad: 70 + (s % 9),
+            fc: 68 + (s % 20),
+            fr: 14 + (s % 5),
+            temp: +(36.1 + (s % 7) * 0.1).toFixed(1),
+            spo2: 96 + (s % 3),
+            hgt: 84 + (s % 15)
+          }),
+          explanation: "Todos os sinais vitais estão dentro da normalidade: PA < 120×80 mmHg (Normotensão), FC 60–100 bpm (Normocardia), FR 12–20 irpm (Eupneia), Tax 35,5–36,9 °C (Afebril), SpO₂ 95–98% e HGT 70–99 mg/dL.",
+          conduct: "Registrar fidedignamente todos os parâmetros aferidos no prontuário com data, hora e identificação profissional, reforçando orientações de promoção à saúde."
+        }
+      ];
+
+      // Gera exatamente 300 pacientes únicos (20 variações × 15 condições = 300)
+      function build300PatientsDatabase() {
+        const db = [];
+        let idCounter = 1;
+
+        for (let roundIdx = 0; roundIdx < 20; roundIdx++) {
+          for (let condIdx = 0; condIdx < CONDITION_TEMPLATES.length; condIdx++) {
+            const tpl = CONDITION_TEMPLATES[condIdx];
+            const seed = idCounter * 17 + roundIdx * 31 + condIdx * 13;
+            const isFemale = idCounter % 2 === 0;
+            const firstName = isFemale
+              ? FIRST_NAMES_F[seed % FIRST_NAMES_F.length]
+              : FIRST_NAMES_M[seed % FIRST_NAMES_M.length];
+            const lastName1 = LAST_NAMES[(seed * 3) % LAST_NAMES.length];
+            const lastName2 = LAST_NAMES[(seed * 7 + 5) % LAST_NAMES.length];
+            const fullName = `${firstName} ${lastName1} ${lastName2}`;
+
+            const ageSpan = tpl.ageRange[1] - tpl.ageRange[0] + 1;
+            const age = tpl.ageRange[0] + (seed % ageSpan);
+            const complaint = tpl.complaints[seed % tpl.complaints.length];
+            const history = tpl.histories[(seed + 1) % tpl.histories.length];
+            const setting = SETTINGS[seed % SETTINGS.length];
+            const vitals = tpl.genVitals(seed);
+
+            // Embaralha as 4 opções de forma determinística por paciente
+            const rawOptions = [
+              { text: tpl.label, isCorrect: true },
+              { text: tpl.distractors[0], isCorrect: false },
+              { text: tpl.distractors[1], isCorrect: false },
+              { text: tpl.distractors[2], isCorrect: false }
+            ];
+            const shift = seed % 4;
+            const options = rawOptions.map((_, idx) => rawOptions[(idx + shift) % 4]);
+
+            db.push({
+              id: idCounter,
+              code: "#" + String(idCounter).padStart(3, "0"),
+              name: fullName,
+              sex: isFemale ? "Feminino" : "Masculino",
+              age,
+              setting,
+              complaint,
+              history,
+              vitals,
+              options,
+              correctLabel: tpl.label,
+              explanation: tpl.explanation,
+              conduct: tpl.conduct
+            });
+
+            idCounter++;
+          }
+        }
+        return db;
+      }
+
+      const ALL_300_PATIENTS = build300PatientsDatabase();
+
+      /* -------------------------------------------------------------------
+       * 3. CLASSIFICADORES CLÍNICOS DOS PARÂMETROS (SBC / EBSERH / SBD)
+       * ------------------------------------------------------------------- */
+      function classifyVital(type, v) {
+        if (type === "pa") {
+          if (v.pas >= 180 || v.pad >= 120) return { label: "Crise Hipertensiva", cls: "bg-rose-600 text-white", alert: true };
+          if (v.pas >= 140 || v.pad >= 90) return { label: "HAS Estágio 2", cls: "bg-orange-100 text-orange-900", alert: true };
+          if ((v.pas >= 130 && v.pas <= 139) || (v.pad >= 80 && v.pad <= 89)) return { label: "HAS Estágio 1", cls: "bg-amber-100 text-amber-900", alert: true };
+          if (v.pas < 90 || v.pad < 60) return { label: "Hipotensão Arterial", cls: "bg-rose-100 text-rose-900", alert: true };
+          return { label: "Normotensão", cls: "bg-emerald-100 text-emerald-900", alert: false };
+        }
+        if (type === "fc") {
+          if (v.fc < 60) return { label: "Bradicardia (< 60)", cls: "bg-sky-100 text-sky-900", alert: true };
+          if (v.fc > 100) return { label: "Taquicardia (> 100)", cls: "bg-rose-100 text-rose-900", alert: true };
+          return { label: "Normocardia (60–100)", cls: "bg-emerald-100 text-emerald-900", alert: false };
+        }
+        if (type === "fr") {
+          if (v.fr < 12) return { label: "Bradipneia (< 12)", cls: "bg-sky-100 text-sky-900", alert: true };
+          if (v.fr > 20) return { label: "Taquipneia (> 20)", cls: "bg-orange-100 text-orange-900", alert: true };
+          return { label: "Eupneia (12–20)", cls: "bg-emerald-100 text-emerald-900", alert: false };
+        }
+        if (type === "temp") {
+          if (v.temp < 35.5) return { label: "Hipotermia (< 35,5°C)", cls: "bg-sky-100 text-sky-900", alert: true };
+          if (v.temp <= 36.9) return { label: "Afebril (Normal)", cls: "bg-emerald-100 text-emerald-900", alert: false };
+          if (v.temp <= 37.7) return { label: "Subfebril (37,0–37,7)", cls: "bg-amber-100 text-amber-900", alert: true };
+          if (v.temp <= 39.0) return { label: "Febre / Moderada", cls: "bg-orange-100 text-orange-900", alert: true };
+          if (v.temp <= 40.0) return { label: "Febre Alta (> 39,0)", cls: "bg-rose-100 text-rose-900", alert: true };
+          return { label: "Hiperpirexia (> 40,0)", cls: "bg-rose-600 text-white", alert: true };
+        }
+        if (type === "spo2") {
+          if (v.spo2 < 85) return { label: "Emergência (< 85%)", cls: "bg-rose-600 text-white", alert: true };
+          if (v.spo2 < 88) return { label: "Hipoxemia (< 88%)", cls: "bg-orange-100 text-orange-900", alert: true };
+          if (v.spo2 <= 92) return { label: "Faixa DPOC (88–92%)", cls: "bg-amber-100 text-amber-900", alert: true };
+          return { label: "Normal (95–98%)", cls: "bg-emerald-100 text-emerald-900", alert: false };
+        }
+        if (type === "hgt") {
+          if (v.hgt < 55) return { label: "Hipoglicemia Severa", cls: "bg-rose-600 text-white", alert: true };
+          if (v.hgt < 70) return { label: "Hipoglicemia (< 70)", cls: "bg-rose-100 text-rose-900", alert: true };
+          if (v.hgt <= 99) return { label: "Normoglicemia Jejum", cls: "bg-emerald-100 text-emerald-900", alert: false };
+          if (v.hgt <= 139) return { label: "Pós-Prandial / Limítrofe", cls: "bg-sky-100 text-sky-900", alert: false };
+          if (v.hgt <= 299) return { label: "Hiperglicemia", cls: "bg-amber-100 text-amber-900", alert: true };
+          return { label: "Emergência (> 300)", cls: "bg-rose-600 text-white", alert: true };
+        }
+        return { label: "Aferido", cls: "bg-slate-200 text-slate-800", alert: false };
+      }
+
+      /* -------------------------------------------------------------------
+       * 4. GERENCIAMENTO DE RODADAS (SORTEIO DE 10 SEM REPETIR DOS 300)
+       * ------------------------------------------------------------------- */
+      const usedPatientIds = new Set();
+      let currentRoundPatients = [];
+      let currentIndex = 0;
+      let roundScore = 0;
+      let roundHistory = [];
+
+      let measuredSet = new Set();
+      let selectedOptionIdx = null;
+      let hasAnsweredCurrent = false;
+
+      function shuffleArray(arr) {
+        const copy = arr.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const temp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = temp;
+        }
+        return copy;
+      }
+
+      function startNewRound() {
+        let available = ALL_300_PATIENTS.filter((p) => !usedPatientIds.has(p.id));
+        if (available.length < 10) {
+          usedPatientIds.clear();
+          available = ALL_300_PATIENTS.slice();
+        }
+
+        const shuffled = shuffleArray(available);
+        currentRoundPatients = shuffled.slice(0, 10);
+        currentRoundPatients.forEach((p) => usedPatientIds.add(p.id));
+
+        currentIndex = 0;
+        roundScore = 0;
+        roundHistory = [];
+
+        document.getElementById("roundSummaryContainer").classList.add("hidden");
+        document.getElementById("activeCaseContainer").classList.remove("hidden");
+        document.getElementById("remainingPoolText").textContent = String(300 - usedPatientIds.size);
+
+        loadPatient(0);
+      }
+
+      /* -------------------------------------------------------------------
+       * 5. RENDERIZAÇÃO DO PACIENTE ATUAL & AFERIÇÕES À BEIRA-LEITO
+       * ------------------------------------------------------------------- */
+      const VITAL_KEYS = ["pa", "fc", "fr", "temp", "spo2", "hgt"];
+
+      function resetVitalsUI() {
+        measuredSet.clear();
+        const defaults = {
+          pa: "Aguardando manguito",
+          fc: "Palpar pulso 60s",
+          fr: "Observar discretamente",
+          temp: "Padrão EBSERH",
+          spo2: "Oximetria de pulso",
+          hgt: "Punção lateral digital"
+        };
+
+        VITAL_KEYS.forEach((key) => {
+          const card = document.getElementById(`card-${key}`);
+          const valEl = document.getElementById(`val-${key}`);
+          const tagEl = document.getElementById(`tag-${key}`);
+          const btn = card.querySelector(".measure-btn");
+
+          card.className = "vital-card rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col justify-between";
+          valEl.className = "font-mono-code text-xl font-extrabold text-slate-400 my-1";
+          valEl.textContent = "Não aferida";
+          tagEl.className = "inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200 text-slate-600";
+          tagEl.textContent = defaults[key];
+          btn.disabled = false;
+          btn.classList.remove("opacity-50", "cursor-not-allowed");
+        });
+      }
+
+      function revealVital(key) {
+        if (measuredSet.has(key)) return;
+        const patient = currentRoundPatients[currentIndex];
+        const v = patient.vitals;
+        measuredSet.add(key);
+
+        const card = document.getElementById(`card-${key}`);
+        const valEl = document.getElementById(`val-${key}`);
+        const tagEl = document.getElementById(`tag-${key}`);
+        const btn = card.querySelector(".measure-btn");
+
+        let displayVal = "";
+        if (key === "pa") displayVal = `${v.pas} × ${v.pad}`;
+        else if (key === "fc") displayVal = `${v.fc} bpm`;
+        else if (key === "fr") displayVal = `${v.fr} irpm`;
+        else if (key === "temp") displayVal = `${v.temp.toFixed(1).replace(".", ",")} °C`;
+        else if (key === "spo2") displayVal = `${v.spo2}%`;
+        else if (key === "hgt") displayVal = `${v.hgt} mg/dL`;
+
+        const info = classifyVital(key, v);
+        playMonitorBeep(info.alert);
+
+        card.className = info.alert
+          ? "vital-card measured rounded-xl border-2 border-amber-400 bg-amber-50/40 p-3.5 flex flex-col justify-between shadow-2xs"
+          : "vital-card measured rounded-xl border border-emerald-300 bg-emerald-50/40 p-3.5 flex flex-col justify-between shadow-2xs";
+
+        valEl.className = info.alert
+          ? "font-mono-code text-xl font-extrabold text-slate-950 my-1"
+          : "font-mono-code text-xl font-extrabold text-emerald-950 my-1";
+        valEl.textContent = displayVal;
+
+        tagEl.className = `inline-block px-2 py-0.5 rounded-md text-[11px] font-extrabold ${info.cls}`;
+        tagEl.textContent = info.label;
+
+        btn.disabled = true;
+        btn.classList.add("opacity-50", "cursor-not-allowed");
+
+        updateSubmitEligibility();
+      }
+
+      function updateSubmitEligibility() {
+        const submitBtn = document.getElementById("submitDiagnosisBtn");
+        const hintEl = document.getElementById("measureHintText");
+        const count = measuredSet.size;
+
+        if (count < 3) {
+          hintEl.innerHTML = `Parâmetros aferidos: <strong>${count}/6</strong>. Afira pelo menos <strong>3 sinais vitais</strong> antes de fechar a avaliação.`;
+          submitBtn.disabled = true;
+        } else if (selectedOptionIdx === null) {
+          hintEl.innerHTML = `Parâmetros aferidos: <strong>${count}/6</strong>. Selecione uma das 4 hipóteses clínicas abaixo.`;
+          submitBtn.disabled = true;
+        } else {
+          hintEl.innerHTML = `Pronto! <strong>${count}/6</strong> parâmetros aferidos. Clique para confirmar sua avaliação.`;
+          submitBtn.disabled = hasAnsweredCurrent;
+        }
+      }
+
+      function loadPatient(index) {
+        currentIndex = index;
+        selectedOptionIdx = null;
+        hasAnsweredCurrent = false;
+
+        const p = currentRoundPatients[index];
+
+        document.getElementById("roundProgressNum").textContent = String(index + 1);
+        document.getElementById("roundScoreText").textContent = String(roundScore);
+
+        document.getElementById("patientAvatarBadge").textContent = p.code;
+        document.getElementById("patientNameTitle").textContent = p.name;
+        document.getElementById("patientAgeSexBadge").textContent = `${p.age} anos • ${p.sex}`;
+        document.getElementById("patientSettingText").textContent = p.setting;
+        document.getElementById("patientIdPill").textContent = `Prontuário ${p.code}/300`;
+        document.getElementById("patientComplaintText").textContent = p.complaint;
+        document.getElementById("patientHistoryText").textContent = p.history;
+
+        resetVitalsUI();
+
+        // Renderiza 4 alternativas
+        const optionsContainer = document.getElementById("optionsContainer");
+        optionsContainer.innerHTML = "";
+        const letters = ["A", "B", "C", "D"];
+
+        p.options.forEach((opt, idx) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className =
+            "option-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-400 flex items-center gap-3 cursor-pointer";
+          btn.innerHTML = `
+            <span class="w-7 h-7 rounded-lg bg-white border border-slate-300 font-mono-code text-xs font-extrabold text-slate-700 flex items-center justify-center shrink-0">
+              ${letters[idx]}
+            </span>
+            <span class="text-xs sm:text-sm font-bold text-slate-800">${opt.text}</span>
+          `;
+
+          btn.addEventListener("click", () => {
+            if (hasAnsweredCurrent) return;
+            selectedOptionIdx = idx;
+
+            Array.from(optionsContainer.children).forEach((child, cIdx) => {
+              if (cIdx === idx) {
+                child.className =
+                  "option-btn w-full text-left p-3.5 rounded-xl border-2 border-[#0f4c81] bg-sky-50 flex items-center gap-3 cursor-pointer shadow-2xs";
+                child.querySelector("span").className =
+                  "w-7 h-7 rounded-lg bg-[#0f4c81] font-mono-code text-xs font-extrabold text-white flex items-center justify-center shrink-0";
+              } else {
+                child.className =
+                  "option-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-sky-50 flex items-center gap-3 cursor-pointer";
+                child.querySelector("span").className =
+                  "w-7 h-7 rounded-lg bg-white border border-slate-300 font-mono-code text-xs font-extrabold text-slate-700 flex items-center justify-center shrink-0";
+              }
+            });
+
+            updateSubmitEligibility();
+          });
+
+          optionsContainer.appendChild(btn);
+        });
+
+        document.getElementById("feedbackPanel").classList.add("hidden");
+        document.getElementById("submitDiagnosisBtn").classList.remove("hidden");
+        updateSubmitEligibility();
+      }
+
+      /* -------------------------------------------------------------------
+       * 6. CONFIRMAÇÃO DA RESPOSTA & TRANSIÇÃO ENTRE PACIENTES / RESUMO
+       * ------------------------------------------------------------------- */
+      document.querySelectorAll(".measure-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const key = btn.getAttribute("data-measure");
+          revealVital(key);
+        });
+      });
+
+      document.getElementById("measureAllBtn").addEventListener("click", () => {
+        VITAL_KEYS.forEach((key) => revealVital(key));
+      });
+
+      document.getElementById("submitDiagnosisBtn").addEventListener("click", () => {
+        if (hasAnsweredCurrent || selectedOptionIdx === null) return;
+        hasAnsweredCurrent = true;
+
+        // Revela eventuais sinais vitais ainda não aferidos para revisão completa
+        VITAL_KEYS.forEach((key) => revealVital(key));
+
+        const p = currentRoundPatients[currentIndex];
+        const chosen = p.options[selectedOptionIdx];
+        const isCorrect = chosen.isCorrect;
+
+        if (isCorrect) {
+          roundScore++;
+          playMonitorBeep(false);
+        } else {
+          playMonitorBeep(true);
+        }
+
+        document.getElementById("roundScoreText").textContent = String(roundScore);
+
+        roundHistory.push({
+          patient: p,
+          chosenLabel: chosen.text,
+          isCorrect
+        });
+
+        // Estiliza opções com gabarito
+        const optionsContainer = document.getElementById("optionsContainer");
+        Array.from(optionsContainer.children).forEach((btn, idx) => {
+          btn.disabled = true;
+          const opt = p.options[idx];
+          if (opt.isCorrect) {
+            btn.className =
+              "w-full text-left p-3.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 flex items-center gap-3";
+          } else if (idx === selectedOptionIdx && !opt.isCorrect) {
+            btn.className =
+              "w-full text-left p-3.5 rounded-xl border-2 border-rose-600 bg-rose-50 flex items-center gap-3";
+          } else {
+            btn.className =
+              "w-full text-left p-3.5 rounded-xl border border-slate-200 bg-slate-50 opacity-60 flex items-center gap-3";
+          }
+        });
+
+        // Exibe painel de feedback
+        const feedbackPanel = document.getElementById("feedbackPanel");
+        const badge = document.getElementById("feedbackStatusBadge");
+        const titleEl = document.getElementById("feedbackTitle");
+        const expEl = document.getElementById("feedbackExplanation");
+        const condEl = document.getElementById("feedbackConduct");
+        const nextBtn = document.getElementById("nextPatientBtn");
+
+        feedbackPanel.classList.remove("hidden");
+        document.getElementById("submitDiagnosisBtn").classList.add("hidden");
+        document.getElementById("feedbackPatientCode").textContent = `Paciente ${p.code}`;
+
+        if (isCorrect) {
+          feedbackPanel.className = "mt-5 rounded-2xl p-4 sm:p-5 border-2 border-emerald-400 bg-emerald-50/70";
+          badge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white";
+          badge.textContent = "✔ Avaliação Clínica Correta (+1 ponto)";
+        } else {
+          feedbackPanel.className = "mt-5 rounded-2xl p-4 sm:p-5 border-2 border-rose-400 bg-rose-50/70";
+          badge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-rose-600 text-white";
+          badge.textContent = "✖ Atenção aos Parâmetros Vitais";
+        }
+
+        titleEl.textContent = `Diagnóstico Clínico: ${p.correctLabel}`;
+        expEl.textContent = p.explanation;
+        condEl.textContent = p.conduct;
+
+        if (currentIndex < 9) {
+          nextBtn.textContent = `Próximo Paciente (${currentIndex + 2} de 10) →`;
+        } else {
+          nextBtn.textContent = "Concluir Rodada e Ver Resumo dos 10 Casos →";
+        }
+      });
+
+      document.getElementById("nextPatientBtn").addEventListener("click", () => {
+        if (currentIndex < 9) {
+          loadPatient(currentIndex + 1);
+        } else {
+          showRoundSummary();
+        }
+      });
+
+      function showRoundSummary() {
+        document.getElementById("activeCaseContainer").classList.add("hidden");
+        const summaryEl = document.getElementById("roundSummaryContainer");
+        summaryEl.classList.remove("hidden");
+
+        const pct = Math.round((roundScore / 10) * 100);
+        document.getElementById("summaryScoreBig").textContent = `${roundScore}/10`;
+        document.getElementById("summaryPercentBig").textContent = `${pct}%`;
+
+        let msg = "Excelente raciocínio clínico! Você interpretou com precisão os sinais vitais e a glicemia capilar.";
+        if (roundScore < 5) {
+          msg = "Vale revisar os valores de referência no Guia Técnico e treinar no Simulador Fisiológico antes da próxima rodada.";
+        } else if (roundScore < 8) {
+          msg = "Bom desempenho! Revise os casos abaixo para consolidar os pontos de corte da SBC (2020) e EBSERH (2025).";
+        }
+        document.getElementById("summaryPerformanceText").textContent = msg;
+
+        const tbody = document.getElementById("summaryTableBody");
+        tbody.innerHTML = "";
+        roundHistory.forEach((item, idx) => {
+          const p = item.patient;
+          const v = p.vitals;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-mono-code font-bold text-slate-500">${idx + 1}</td>
+            <td class="py-3 px-4">
+              <strong class="text-slate-900 block">${p.name} (${p.code})</strong>
+              <span class="text-xs text-slate-500">${p.age} anos • ${p.sex}</span>
+            </td>
+            <td class="py-3 px-4 font-mono-code text-xs text-slate-700">
+              PA ${v.pas}×${v.pad} | FC ${v.fc} | FR ${v.fr} | T ${v.temp.toFixed(1).replace(".", ",")}°C | SpO₂ ${v.spo2}% | HGT ${v.hgt}
+            </td>
+            <td class="py-3 px-4 text-xs font-bold text-slate-900">${p.correctLabel}</td>
+            <td class="py-3 px-4 text-center">
+              ${
+                item.isCorrect
+                  ? '<span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">✔ Acertou</span>'
+                  : '<span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-extrabold">✖ Errou</span>'
+              }
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document.getElementById("newRoundHeaderBtn").addEventListener("click", startNewRound);
+      document.getElementById("playAgainRoundBtn").addEventListener("click", startNewRound);
+
+      // Inicia a primeira rodada de 10 pacientes sorteados dentre os 300
+      startNewRound();
+    })();
+  </script>
+</body>
+</html>
