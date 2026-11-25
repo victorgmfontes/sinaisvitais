@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guia Prático de Sinais Vitais — Aferição Correta e Práticas Seguras | VICTOR FONTES PRODUÇÕES</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .card-elevated {
+      transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.24s ease;
+    }
+
+    .card-elevated:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 30px -12px rgba(15, 23, 42, 0.14);
+    }
+
+    .hero-pattern {
+      background-image: radial-gradient(rgba(56, 189, 248, 0.14) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Ajustes específicos para telas horizontais compactas / celulares em paisagem */
+    @media (max-height: 520px) and (orientation: landscape) {
+      .hero-section-pad {
+        padding-top: 1.75rem !important;
+        padding-bottom: 2.25rem !important;
+      }
+      .hero-title {
+        font-size: 1.85rem !important;
+        line-height: 1.15 !important;
+      }
+      .main-overlap {
+        margin-top: -1rem !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-teal-200 selection:text-slate-900">
+
+  <!-- CABEÇALHO SUPERIOR COM MARCA VICTOR FONTES PRODUÇÕES -->
+  <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+
+      <!-- Marca VICTOR FONTES PRODUÇÕES (Imagem da raiz + Fallback tipográfico elegante) -->
+      <a href="index.html" class="group flex items-center gap-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 rounded-xl py-0.5 pr-2">
+        <div id="brandLogoContainer" class="flex items-center">
+          <img
+            id="brandLogoImg"
+            src="./logo-victor-fontes.png"
+            alt="VICTOR FONTES PRODUÇÕES"
+            class="h-10 sm:h-11 w-auto max-w-[230px] object-contain rounded-md bg-white px-1.5 py-0.5 border border-slate-200/80"
+          />
+          <div id="brandLogoFallback" class="hidden flex-col leading-none select-none px-2.5 py-1 rounded-lg bg-slate-900 text-white border border-slate-800">
+            <span class="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-white">VICTOR FONTES</span>
+            <span class="text-[10px] font-bold tracking-[0.22em] uppercase text-teal-300 mt-0.5 text-center">PRODUÇÕES</span>
+          </div>
+        </div>
+
+        <div class="hidden md:block h-7 w-px bg-slate-200"></div>
+
+        <div class="hidden md:block">
+          <span class="block text-[11px] font-bold uppercase tracking-wider text-teal-700">Portal Técnico de Enfermagem</span>
+          <span class="block text-xs font-semibold text-slate-600">Victor Fontes • 2026</span>
+        </div>
+      </a>
+
+      <!-- Ações Rápidas do Topo -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Victor Fontes, 2026</span>
+        </span>
+
+        <button
+          id="fullscreenToggleBtn"
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs"
+          title="Alternar modo tela cheia para apresentação em sala"
+        >
+          <svg id="fsIcon" class="w-4 h-4 text-teal-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+          <span id="fsBtnText">Tela Cheia</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO PRINCIPAL -->
+  <section class="hero-section-pad relative bg-gradient-to-br from-slate-900 via-[#0a3254] to-[#0f4c81] text-white overflow-hidden">
+    <div class="hero-pattern absolute inset-0 pointer-events-none"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-11 sm:py-16 relative z-10">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-teal-500/15 border border-teal-400/30 text-teal-300 text-xs font-extrabold uppercase tracking-widest mb-4">
+          <span>VICTOR FONTES PRODUÇÕES • 2026</span>
+        </div>
+
+        <h1 class="hero-title text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.12] text-white">
+          Guia Prático de Sinais Vitais
+        </h1>
+
+        <p class="mt-3 sm:mt-4 text-base sm:text-xl font-medium text-sky-100 leading-relaxed">
+          Aferição Correta e Práticas Seguras na Assistência à Saúde
+        </p>
+
+        <p class="mt-3 text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+          Ambiente interativo para aulas, treinamento prático e raciocínio clínico: explore os slides do guia, simule a fisiologia e o posicionamento do paciente à beira-leito e resolva casos sorteados a partir de um banco de 300 pacientes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="main-overlap flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 -mt-7 sm:-mt-9 pb-12 relative z-20">
+
+    <!-- 3 CARTÕES / BOTÕES PRINCIPAIS -->
+    <section aria-label="Módulos interativos principais" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- 1. APRESENTAÇÃO INTERATIVA -->
+      <article class="card-elevated bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col justify-between hover:border-sky-500">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+                <path d="M7 10.5l2.5 2.5 4-4 3.5 3.5"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-sky-100 text-sky-900">
+              Slides • Aula
+            </span>
+          </div>
+
+          <h2 class="text-xl font-extrabold text-slate-900 mb-2">
+            Apresentação Interativa
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed mb-4">
+            Apresentação completa do Guia Prático de Sinais Vitais com protocolo pré-aferição, PA (palpatório, auscultatório e Sons de Korotkoff), FC, FR, Temperatura (EBSERH), SpO₂ e Glicemia Capilar.
+          </p>
+        </div>
+
+        <a
+          href="apresentacao.html"
+          data-local-target="apresentacao.html"
+          class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#0f4c81] hover:bg-[#093256] active:scale-[0.99] text-white font-bold text-sm sm:text-base shadow-xs transition"
+        >
+          <span>Abrir Apresentação</span>
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </a>
+      </article>
+
+      <!-- 2. SIMULADOR FISIOLÓGICO E PRÁTICAS SEGURAS -->
+      <article class="card-elevated bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col justify-between hover:border-teal-500">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-teal-100 text-teal-900">
+              Laboratório Visual
+            </span>
+          </div>
+
+          <h2 class="text-xl font-extrabold text-slate-900 mb-2">
+            Simulador Fisiológico e Práticas Seguras
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed mb-4">
+            Simule o posicionamento correto do paciente e práticas seguras, oclusão arterial e Sons de Korotkoff na PA, fisiologia da Febre, Oximetria (SpO₂) e Glicemia Capilar (HGT).
+          </p>
+        </div>
+
+        <a
+          href="simulador.html"
+          data-local-target="simulador.html"
+          class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-[0.99] text-white font-bold text-sm sm:text-base shadow-xs transition"
+        >
+          <span>Abrir Simulador Fisiológico</span>
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </a>
+      </article>
+
+      <!-- 3. JOGO DE SIMULAÇÃO DE CASOS CLÍNICOS (300 PACIENTES / 10 POR RODADA) -->
+      <article class="card-elevated bg-white rounded-2xl border border-slate-200 shadow-md p-6 flex flex-col justify-between md:col-span-2 lg:col-span-1 hover:border-emerald-500">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1"/>
+                <path d="M9 14l2 2 4-4"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-900">
+              300 Pacientes • 10/Rodada
+            </span>
+          </div>
+
+          <h2 class="text-xl font-extrabold text-slate-900 mb-2">
+            Jogo de Simulação de Casos Clínicos
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed mb-4">
+            Avalie os sintomas, realize a aferição dos sinais vitais e da glicemia capilar e descubra o quadro clínico em rodadas de 10 pacientes sorteados entre 300 casos.
+          </p>
+        </div>
+
+        <a
+          href="jogo-casos.html"
+          data-local-target="jogo-casos.html"
+          class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm sm:text-base shadow-xs transition"
+        >
+          <span>Jogar Simulação de Casos</span>
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </a>
+      </article>
+
+    </section>
+
+    <!-- ÁREA SECUNDÁRIA: 2 BOTÕES DE MATERIAL DE APOIO (PDF) + VISUALIZAÇÃO RÁPIDA -->
+    <section aria-labelledby="apoio-titulo" class="mt-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200">
+        <div>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-sky-700 block">Material de Apoio &amp; Avaliação</span>
+          <h2 id="apoio-titulo" class="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">
+            Documentos PDF para Alunos
+          </h2>
+        </div>
+        <p class="text-xs text-slate-500">
+          Mantenha <span class="font-mono-code text-slate-700">guia-tecnico.pdf</span> e <span class="font-mono-code text-slate-700">avaliacao-sinais-vitais.pdf</span> na mesma pasta do <span class="font-mono-code text-slate-700">index.html</span>.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5">
+
+        <!-- BOTÃO SECUNDÁRIO 1: GUIA TÉCNICO PDF (VISUALIZAR E IMPRIMIR) -->
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <span class="px-2.5 py-1.5 rounded-lg bg-rose-100 text-rose-800 font-mono-code text-xs font-bold shrink-0 mt-0.5">
+              PDF
+            </span>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+                Guia Técnico: Aferição de Sinais Vitais e Práticas Seguras
+              </h3>
+              <p class="text-xs text-slate-600 mt-0.5">
+                Abrir documento para leitura, envio aos alunos ou impressão.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <a
+              href="guia-tecnico.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-local-target="guia-tecnico.pdf"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+              </svg>
+              <span>Visualizar / Imprimir</span>
+            </a>
+
+            <button
+              type="button"
+              data-preview-pdf="guia-tecnico.pdf"
+              data-preview-title="Guia Técnico: Aferição de Sinais Vitais e Práticas Seguras"
+              class="inline-flex items-center gap-1 px-3 py-2.5 rounded-lg bg-white hover:bg-sky-50 text-sky-800 border border-slate-300 text-xs font-bold transition cursor-pointer"
+              title="Abrir prévia rápida na tela"
+            >
+              <span>Prévia</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- BOTÃO SECUNDÁRIO 2: AVALIAÇÃO PDF (BAIXAR PARA ENVIAR AOS ALUNOS) -->
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <span class="px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-900 font-mono-code text-xs font-bold shrink-0 mt-0.5">
+              PDF
+            </span>
+            <div>
+              <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+                Avaliação – Sinais Vitais e Práticas Seguras
+              </h3>
+              <p class="text-xs text-slate-600 mt-0.5">
+                Baixar arquivo de avaliação para enviar aos alunos como material de apoio.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <a
+              href="avaliacao-sinais-vitais.pdf"
+              download="Avaliacao_Sinais_Vitais_e_Praticas_Seguras.pdf"
+              data-local-target="avaliacao-sinais-vitais.pdf"
+              class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold transition"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Baixar Avaliação</span>
+            </a>
+
+            <button
+              type="button"
+              data-preview-pdf="avaliacao-sinais-vitais.pdf"
+              data-preview-title="Avaliação – Sinais Vitais e Práticas Seguras"
+              class="inline-flex items-center gap-1 px-3 py-2.5 rounded-lg bg-white hover:bg-teal-50 text-teal-800 border border-slate-300 text-xs font-bold transition cursor-pointer"
+              title="Abrir prévia rápida na tela"
+            >
+              <span>Prévia</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL OPCIONAL DE VISUALIZAÇÃO RÁPIDA EM PDF -->
+  <div
+    id="pdfModal"
+    class="fixed inset-0 z-50 hidden bg-slate-950/75 backdrop-blur-xs items-center justify-center p-3 sm:p-6"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pdfModalTitle"
+  >
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-5xl h-[86vh] flex flex-col overflow-hidden">
+      <div class="px-4 sm:px-6 py-3.5 bg-slate-900 text-white flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-teal-300 block">Visualização Rápida do Documento</span>
+          <h3 id="pdfModalTitle" class="text-sm sm:text-base font-extrabold truncate">Documento PDF</h3>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <a
+            id="pdfModalExternalLink"
+            href="guia-tecnico.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition"
+          >
+            Abrir em Nova Aba
+          </a>
+          <button
+            id="closePdfModalBtn"
+            type="button"
+            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
+          >
+            Fechar ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 bg-slate-100 relative">
+        <iframe
+          id="pdfModalFrame"
+          src=""
+          title="Prévia do PDF"
+          class="w-full h-full border-0"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVISO SUAVE QUANDO TESTADO EM AMBIENTE ISOLADO SEM OS ARQUIVOS LOCAIS -->
+  <div
+    id="statusBanner"
+    class="fixed bottom-4 right-4 z-40 hidden max-w-sm bg-slate-900 text-white border border-slate-700 rounded-xl shadow-xl p-3.5 text-xs items-start gap-2.5"
+  >
+    <span class="text-teal-300 font-bold text-sm leading-none mt-0.5">●</span>
+    <div id="statusBannerText" class="leading-relaxed text-slate-200"></div>
+    <button id="closeStatusBannerBtn" type="button" class="text-slate-400 hover:text-white font-bold ml-1 cursor-pointer">✕</button>
+  </div>
+
+  <!-- RODAPÉ -->
+  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 py-5 px-4 sm:px-6 lg:px-8 text-xs sm:text-sm">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+      <p><strong class="text-white">VICTOR FONTES PRODUÇÕES</strong> • Victor Fontes, 2026 — Guia Prático de Sinais Vitais: Aferição Correta e Práticas Seguras.</p>
+      <p class="text-slate-400">Pronto para publicação no GitHub Pages.</p>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // 1. Fallback elegante caso ./logo-victor-fontes.png ainda não esteja na raiz
+      const logoImg = document.getElementById("brandLogoImg");
+      const logoFallback = document.getElementById("brandLogoFallback");
+
+      function showLogoFallback() {
+        logoImg.classList.add("hidden");
+        logoFallback.classList.remove("hidden");
+        logoFallback.classList.add("flex");
+      }
+
+      logoImg.addEventListener("error", showLogoFallback);
+
+      if (logoImg.complete && logoImg.naturalWidth === 0) {
+        showLogoFallback();
+      }
+
+      // 2. Controle de Tela Cheia
+      const fullscreenBtn = document.getElementById("fullscreenToggleBtn");
+      const fsBtnText = document.getElementById("fsBtnText");
+
+      fullscreenBtn.addEventListener("click", function () {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(function () {});
+        } else {
+          document.exitFullscreen().catch(function () {});
+        }
+      });
+
+      document.addEventListener("fullscreenchange", function () {
+        fsBtnText.textContent = document.fullscreenElement ? "Sair da Tela Cheia" : "Tela Cheia";
+      });
+
+      // 3. Modal Opcional de Visualização Rápida em PDF
+      const pdfModal = document.getElementById("pdfModal");
+      const pdfModalTitle = document.getElementById("pdfModalTitle");
+      const pdfModalFrame = document.getElementById("pdfModalFrame");
+      const pdfModalExternalLink = document.getElementById("pdfModalExternalLink");
+      const closePdfModalBtn = document.getElementById("closePdfModalBtn");
+
+      document.querySelectorAll("[data-preview-pdf]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const pdfFile = btn.getAttribute("data-preview-pdf");
+          const pdfTitle = btn.getAttribute("data-preview-title");
+          pdfModalTitle.textContent = pdfTitle || "Documento PDF";
+          pdfModalExternalLink.href = pdfFile;
+          pdfModalFrame.src = pdfFile;
+          pdfModal.classList.remove("hidden");
+          pdfModal.classList.add("flex");
+        });
+      });
+
+      function closePdfModal() {
+        pdfModal.classList.add("hidden");
+        pdfModal.classList.remove("flex");
+        pdfModalFrame.src = "";
+      }
+
+      closePdfModalBtn.addEventListener("click", closePdfModal);
+
+      pdfModal.addEventListener("click", function (e) {
+        if (e.target === pdfModal) {
+          closePdfModal();
+        }
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !pdfModal.classList.contains("hidden")) {
+          closePdfModal();
+        }
+      });
+
+      // 4. Feedback informativo apenas quando aberto em visualização isolada (about:srcdoc / blob:)
+      const statusBanner = document.getElementById("statusBanner");
+      const statusBannerText = document.getElementById("statusBannerText");
+      const closeStatusBannerBtn = document.getElementById("closeStatusBannerBtn");
+
+      closeStatusBannerBtn.addEventListener("click", function () {
+        statusBanner.classList.add("hidden");
+        statusBanner.classList.remove("flex");
+      });
+
+      const isIsolatedPreview = window.location.protocol === "about:" || window.location.protocol === "blob:";
+      if (isIsolatedPreview) {
+        document.querySelectorAll("[data-local-target]").forEach(function (link) {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const targetFile = link.getAttribute("data-local-target");
+            statusBannerText.innerHTML =
+              'Link configurado para <strong class="text-white font-mono-code">' +
+              targetFile +
+              '</strong> na mesma pasta do <strong class="text-white font-mono-code">index.html</strong>. Ao publicar no GitHub Pages ou abrir localmente com os demais arquivos, este botão abrirá o destino diretamente.';
+            statusBanner.classList.remove("hidden");
+            statusBanner.classList.add("flex");
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

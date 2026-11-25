@@ -1,0 +1,2443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador Fisiológico Interativo & Práticas Seguras | VICTOR FONTES PRODUÇÕES</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy-deep: #0b2545;
+      --navy-mid: #0f4c81;
+      --teal-accent: #0d9488;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    /* Sliders Customizados */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #0f4c81;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+      background: #0d9488;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #0f4c81;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+      cursor: pointer;
+    }
+
+    /* Abas */
+    .tab-btn {
+      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #0f4c81 0%, #0d9488 100%);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 8px 18px -6px rgba(15, 76, 129, 0.45);
+    }
+
+    .tab-panel {
+      display: none;
+      animation: panelFade 0.28s ease-out;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes panelFade {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Animação de tremor (calafrios / hipoglicemia) */
+    @keyframes shiverAnim {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-2.5px); }
+      75% { transform: translateX(2.5px); }
+    }
+
+    .shiver-active {
+      animation: shiverAnim 0.14s infinite linear;
+    }
+
+    /* Animação de gota de suor */
+    @keyframes sweatFall {
+      0% { transform: translateY(0); opacity: 0.95; }
+      100% { transform: translateY(14px); opacity: 0; }
+    }
+
+    .sweat-drop {
+      animation: sweatFall 1.15s infinite ease-in;
+    }
+
+    /* Ocultar barra de rolagem horizontal das abas mantendo o scroll funcional */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-teal-200 selection:text-slate-900">
+
+  <!-- CABEÇALHO INSTITUCIONAL -->
+  <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Marca + Título -->
+      <div class="flex items-center gap-3.5 min-w-0">
+        <a href="index.html" class="flex items-center shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 rounded-lg">
+          <img
+            id="brandLogoImg"
+            src="./logo-victor-fontes.png"
+            alt="VICTOR FONTES PRODUÇÕES"
+            class="h-10 sm:h-11 w-auto max-w-[210px] object-contain rounded-md bg-white px-1.5 py-0.5 border border-slate-200/80"
+          />
+          <div id="brandLogoFallback" class="hidden flex-col leading-none select-none px-2.5 py-1 rounded-lg bg-slate-900 text-white border border-slate-800">
+            <span class="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-white">VICTOR FONTES</span>
+            <span class="text-[10px] font-bold tracking-[0.22em] uppercase text-teal-300 mt-0.5 text-center">PRODUÇÕES</span>
+          </div>
+        </a>
+
+        <div class="hidden sm:block h-8 w-px bg-slate-200 shrink-0"></div>
+
+        <div class="min-w-0">
+          <span class="block text-[11px] font-extrabold uppercase tracking-wider text-teal-700 truncate">Laboratório Virtual • Victor Fontes, 2026</span>
+          <h1 class="text-sm sm:text-lg font-extrabold text-slate-900 truncate">
+            Simulador Fisiológico Interativo &amp; Práticas Seguras
+          </h1>
+        </div>
+      </div>
+
+      <!-- Navegação Rápida -->
+      <nav aria-label="Navegação entre módulos" class="flex items-center gap-2 flex-wrap">
+        <a
+          href="index.html"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold border border-slate-200 transition"
+        >
+          <span>← Voltar ao Início</span>
+        </a>
+        <a
+          href="apresentacao.html"
+          class="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 text-xs sm:text-sm font-bold border border-sky-200 transition"
+        >
+          <span>Apresentação</span>
+        </a>
+        <a
+          href="jogo-casos.html"
+          class="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs sm:text-sm font-bold border border-emerald-200 transition"
+        >
+          <span>Jogo de Casos</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- BARRA DE 5 ABAS INTERATIVAS -->
+    <div class="bg-slate-50 border-t border-slate-200/80">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+        <div role="tablist" aria-label="Módulos de Simulação" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
+          <button
+            type="button"
+            role="tab"
+            aria-selected="true"
+            data-tab="tab-praticas"
+            class="tab-btn active shrink-0 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-extrabold cursor-pointer"
+          >
+            1. Práticas Seguras &amp; Posicionamento
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-tab="tab-pa"
+            class="tab-btn shrink-0 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-extrabold cursor-pointer"
+          >
+            2. Pressão Arterial &amp; Sons de Korotkoff
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-tab="tab-febre"
+            class="tab-btn shrink-0 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-extrabold cursor-pointer"
+          >
+            3. Termorregulação &amp; Febre (EBSERH)
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-tab="tab-spo2"
+            class="tab-btn shrink-0 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-extrabold cursor-pointer"
+          >
+            4. Oximetria de Pulso (SpO₂)
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-tab="tab-hgt"
+            class="tab-btn shrink-0 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-extrabold cursor-pointer"
+          >
+            5. Glicemia Capilar (HGT)
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- =================================================================== -->
+    <!-- ABA 1: PRÁTICAS SEGURAS & POSICIONAMENTO DO PACIENTE                -->
+    <!-- =================================================================== -->
+    <section id="tab-praticas" class="tab-panel active">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Visualização Anatômica Postural + Monitor Comparativo -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700 block">Ergonomia &amp; Rigor Técnico</span>
+                <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Posicionamento do Paciente &amp; Pré-Requisitos</h2>
+              </div>
+              <span id="postureStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
+                Protocolo Ideal (0 Erros)
+              </span>
+            </div>
+
+            <!-- Palco SVG Interativo do Paciente Sentado -->
+            <div class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-sky-50/60 p-3 overflow-hidden">
+              <svg id="postureSvg" viewBox="0 0 680 390" class="w-full h-auto block" role="img" aria-label="Diagrama anatômico do posicionamento do paciente durante aferição de sinais vitais">
+                <!-- Piso e Linha de Referência do Coração -->
+                <line x1="30" y1="355" x2="650" y2="355" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+                <line x1="170" y1="168" x2="540" y2="168" stroke="#0d9488" stroke-width="1.5" stroke-dasharray="6,5"/>
+                <text x="535" y="161" text-anchor="end" font-size="11" font-weight="800" fill="#0f766e">Nível do Átrio Direito (Coração)</text>
+
+                <!-- Mesa de Apoio do Braço -->
+                <g id="armSupportTable">
+                  <rect x="330" y="192" width="150" height="12" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
+                  <rect x="398" y="204" width="14" height="151" fill="#94a3b8"/>
+                  <rect x="370" y="348" width="70" height="7" rx="3" fill="#64748b"/>
+                </g>
+
+                <!-- Cadeira com Encosto -->
+                <g id="examChair">
+                  <!-- Encosto -->
+                  <rect x="148" y="95" width="18" height="165" rx="7" fill="#334155"/>
+                  <!-- Assento -->
+                  <rect x="152" y="248" width="135" height="16" rx="6" fill="#334155"/>
+                  <!-- Pés da cadeira -->
+                  <line x1="168" y1="264" x2="168" y2="355" stroke="#475569" stroke-width="7" stroke-linecap="round"/>
+                  <line x1="270" y1="264" x2="270" y2="355" stroke="#475569" stroke-width="7" stroke-linecap="round"/>
+                </g>
+
+                <!-- Grupo Tronco + Cabeça (inclina para frente se sem apoio dorsal) -->
+                <g id="torsoAndHeadGroup" transform="rotate(0, 210, 248)">
+                  <!-- Tronco -->
+                  <rect x="180" y="122" width="56" height="130" rx="24" fill="#0f4c81"/>
+                  <!-- Marcador do Coração -->
+                  <circle cx="215" cy="168" r="9" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+                  <!-- Bexiga (indicador interno) -->
+                  <ellipse id="bladderIndicator" cx="212" cy="233" rx="11" ry="8" fill="#38bdf8" opacity="0.35"/>
+                  <text id="bladderSvgTag" x="122" y="236" text-anchor="end" font-size="10.5" font-weight="700" fill="#64748b">Bexiga Vazia</text>
+
+                  <!-- Pescoço e Cabeça -->
+                  <rect x="198" y="98" width="20" height="28" rx="8" fill="#f5cbb5"/>
+                  <circle cx="208" cy="68" r="32" fill="#fde6d8" stroke="#d6a287" stroke-width="2"/>
+                  <path d="M 176 62 C 176 32, 240 32, 240 62 C 232 45, 184 45, 176 62 Z" fill="#1e293b"/>
+                  <circle cx="220" cy="64" r="3" fill="#0f172a"/>
+                  <path id="postureMouth" d="M 214 80 Q 222 84 228 80" fill="none" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round"/>
+
+                  <!-- Balão de Fala (visível se paciente falando) -->
+                  <g id="speechBubbleGroup" opacity="0">
+                    <rect x="252" y="24" width="168" height="44" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+                    <polygon points="252,44 240,52 252,56" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+                    <text x="336" y="43" text-anchor="middle" font-size="11" font-weight="800" fill="#92400e">Paciente falando!</text>
+                    <text x="336" y="58" text-anchor="middle" font-size="10" font-weight="600" fill="#b45309">Eleva PA em +8 a +10 mmHg</text>
+                  </g>
+
+                  <!-- Braço e Manguito (gira conforme posição: nível coração, pendente ou elevado) -->
+                  <g id="patientArmGroup" transform="rotate(0, 224, 148)">
+                    <!-- Braço + Antebraço -->
+                    <rect x="220" y="136" width="115" height="28" rx="14" fill="#fde6d8" stroke="#d6a287" stroke-width="1.8"/>
+                    <rect x="325" y="138" width="105" height="24" rx="12" fill="#fde6d8" stroke="#d6a287" stroke-width="1.8"/>
+                    <!-- Palma voltada para cima -->
+                    <ellipse cx="436" cy="149" rx="14" ry="9" fill="#f5cbb5" stroke="#d6a287" stroke-width="1.5"/>
+                    <!-- Manguito -->
+                    <rect id="postureCuffRect" x="252" y="131" width="66" height="38" rx="7" fill="#0284c7" stroke="#0369a1" stroke-width="2"/>
+                    <text id="postureCuffLabel" x="285" y="154" text-anchor="middle" font-size="9.5" font-weight="800" fill="#ffffff">Manguito OK</text>
+                  </g>
+                </g>
+
+                <!-- Coxas e Pernas (altera entre descruzadas com pés no chão vs pernas cruzadas) -->
+                <g id="legsNormalGroup">
+                  <!-- Coxa -->
+                  <rect x="205" y="226" width="115" height="26" rx="13" fill="#1e293b"/>
+                  <!-- Perna vertical até o chão -->
+                  <rect x="294" y="232" width="24" height="114" rx="11" fill="#1e293b"/>
+                  <!-- Pé apoiado no chão -->
+                  <rect x="294" y="340" width="44" height="14" rx="6" fill="#0f172a"/>
+                  <text x="316" y="373" text-anchor="middle" font-size="10.5" font-weight="800" fill="#059669">Pés apoiados e pernas descruzadas</text>
+                </g>
+
+                <g id="legsCrossedGroup" opacity="0">
+                  <!-- Coxa base -->
+                  <rect x="205" y="226" width="115" height="26" rx="13" fill="#1e293b"/>
+                  <rect x="294" y="232" width="24" height="114" rx="11" fill="#1e293b"/>
+                  <rect x="294" y="340" width="44" height="14" rx="6" fill="#0f172a"/>
+                  <!-- Perna cruzada por cima -->
+                  <path d="M 218 222 L 328 205 L 362 285 L 340 293 L 312 230 L 218 242 Z" fill="#dc2626" opacity="0.88"/>
+                  <text x="348" y="314" text-anchor="middle" font-size="10.5" font-weight="800" fill="#dc2626">Pernas cruzadas (+5 a +8 mmHg)</text>
+                </g>
+
+                <!-- Indicador de Agitação / Sem Repouso -->
+                <g id="noRestWaves" opacity="0" stroke="#ea580c" stroke-width="2" fill="none">
+                  <path d="M 164 46 Q 156 58 164 70"/>
+                  <path d="M 155 40 Q 145 58 155 76"/>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Comparador Real vs Medido com Erro -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 block">Valores Fisiológicos Reais (Basal)</span>
+                <div class="mt-2 flex items-baseline gap-3">
+                  <span class="font-mono-code text-2xl font-extrabold text-emerald-950">118 × 76 <small class="text-xs font-bold">mmHg</small></span>
+                </div>
+                <p class="text-xs font-semibold text-emerald-800 mt-1">FC: 72 bpm • FR: 16 irpm • Normotensão</p>
+              </div>
+
+              <div id="measuredDistortedCard" class="rounded-xl bg-slate-50 border border-slate-200 p-4 transition-colors">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 block">Valor Aferido no Aparelho</span>
+                  <span id="deltaBadge" class="px-2 py-0.5 rounded-md font-mono-code text-xs font-extrabold bg-emerald-100 text-emerald-800">±0 mmHg</span>
+                </div>
+                <div class="mt-2 flex items-baseline gap-3">
+                  <span id="distortedBpText" class="font-mono-code text-2xl font-extrabold text-slate-900">118 × 76 <small class="text-xs font-bold">mmHg</small></span>
+                </div>
+                <p id="distortedHrFrText" class="text-xs font-semibold text-slate-600 mt-1">FC: 72 bpm • FR: 16 irpm • Leitura Fidedigna</p>
+              </div>
+            </div>
+
+            <!-- Explicação dos Erros Ativos -->
+            <div id="postureExplanationBox" class="mt-4 rounded-xl p-4 bg-sky-50 border-l-4 border-sky-600 text-xs sm:text-sm text-slate-800 leading-relaxed">
+              <strong>Excelência Técnica:</strong> Todos os pré-requisitos do protocolo foram cumpridos. O braço está apoiado ao nível do coração, o dorso recostado, as pernas descruzadas com pés no chão e o manguito cobre de 75% a 100% da circunferência braquial.
+            </div>
+          </div>
+        </div>
+
+        <!-- Painel de Controles dos 8 Requisitos de Práticas Seguras -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+              <h3 class="text-base font-extrabold text-slate-900">Checklist Interativo de Preparo</h3>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  id="btnIdealProtocol"
+                  class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer"
+                >
+                  Protocolo Ideal
+                </button>
+                <button
+                  type="button"
+                  id="btnClassicError"
+                  class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer"
+                >
+                  Simular Erros
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3.5 text-xs sm:text-sm">
+              <!-- 1. Posição do Braço -->
+              <div>
+                <label for="selArmPos" class="block font-extrabold text-slate-800 mb-1">1. Posição do Braço (Nível do Coração):</label>
+                <select id="selArmPos" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="heart">Apoiado ao nível do coração, palma p/ cima (Correto)</option>
+                  <option value="low">Abaixo do nível do coração / braço pendente (+8 mmHg)</option>
+                  <option value="high">Acima do nível do coração (-8 mmHg)</option>
+                </select>
+              </div>
+
+              <!-- 2. Seleção do Manguito -->
+              <div>
+                <label for="selCuffSize" class="block font-extrabold text-slate-800 mb-1">2. Tamanho do Manguito (75%–100% da circunferência):</label>
+                <select id="selCuffSize" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="ok">Manguito adequado à circunferência braquial (Correto)</option>
+                  <option value="small">Manguito estreito / pequeno (+18/+12 mmHg)</option>
+                  <option value="large">Manguito excessivamente largo / grande (-12/-8 mmHg)</option>
+                </select>
+              </div>
+
+              <!-- 3. Pernas e Pés -->
+              <div>
+                <label for="selLegs" class="block font-extrabold text-slate-800 mb-1">3. Pernas e Pés:</label>
+                <select id="selLegs" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="uncrossed">Pernas descruzadas e pés apoiados no chão (Correto)</option>
+                  <option value="crossed">Pernas cruzadas (+6/+5 mmHg)</option>
+                </select>
+              </div>
+
+              <!-- 4. Apoio do Dorso -->
+              <div>
+                <label for="selBack" class="block font-extrabold text-slate-800 mb-1">4. Apoio Dorsal:</label>
+                <select id="selBack" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="supported">Dorso recostado na cadeira e relaxado (Correto)</option>
+                  <option value="unsupported">Tronco sem apoio / contração isométrica (+6/+5 mmHg)</option>
+                </select>
+              </div>
+
+              <!-- 5. Repouso Prévio -->
+              <div>
+                <label for="selRest" class="block font-extrabold text-slate-800 mb-1">5. Repouso e Atividade Física (60–90 min):</label>
+                <select id="selRest" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="rested">Repouso de 3 a 5 min em ambiente calmo (Correto)</option>
+                  <option value="active">Sem repouso / caminhada rápida recente (+14/+8 mmHg, +18 bpm)</option>
+                </select>
+              </div>
+
+              <!-- 6. Bexiga -->
+              <div>
+                <label for="selBladder" class="block font-extrabold text-slate-800 mb-1">6. Esvaziamento Vesical:</label>
+                <select id="selBladder" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="empty">Bexiga vazia (Correto)</option>
+                  <option value="full">Bexiga cheia / distensão vesical (+12/+8 mmHg)</option>
+                </select>
+              </div>
+
+              <!-- 7. Fala durante o procedimento -->
+              <div>
+                <label for="selTalk" class="block font-extrabold text-slate-800 mb-1">7. Comunicação Durante o Exame:</label>
+                <select id="selTalk" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="silent">Paciente orientado a não falar (Correto)</option>
+                  <option value="talking">Paciente conversando durante a aferição (+9/+7 mmHg)</option>
+                </select>
+              </div>
+
+              <!-- 8. Estimulantes (Café, Álcool, Cigarro) -->
+              <div>
+                <label for="selStimulants" class="block font-extrabold text-slate-800 mb-1">8. Café, Álcool ou Tabaco (últimos 30 min):</label>
+                <select id="selStimulants" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 font-semibold text-slate-800 focus:border-sky-600 focus:outline-none">
+                  <option value="none">Abstinência nos últimos 30 minutos (Correto)</option>
+                  <option value="yes">Ingeriu café ou fumou há &lt; 30 min (+10/+7 mmHg, +12 bpm)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 2: PRESSÃO ARTERIAL & SONS DE KOROTKOFF                         -->
+    <!-- =================================================================== -->
+    <section id="tab-pa" class="tab-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Visualização Hemodinâmica & Estetoscópio -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-sky-700 block">Hemodinâmica Braquial</span>
+                <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Oclusão Arterial &amp; Sons de Korotkoff</h2>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  id="toggleKorotkoffAudioBtn"
+                  class="px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer"
+                >
+                  🔇 Ativar Áudio do Estetoscópio
+                </button>
+                <span id="paPhaseBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
+                  Artéria Livre • Silêncio
+                </span>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-sky-50/70 p-3 overflow-hidden">
+              <svg id="paSvg" viewBox="0 0 720 415" class="w-full h-auto block" role="img" aria-label="Simulação anatômica da artéria braquial, manguito, pulso radial e sons de Korotkoff">
+                <defs>
+                  <linearGradient id="skinGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#fde6d8"/>
+                    <stop offset="100%" stop-color="#f3c6ad"/>
+                  </linearGradient>
+                  <linearGradient id="cuffGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#0f4c81"/>
+                    <stop offset="50%" stop-color="#0284c7"/>
+                    <stop offset="100%" stop-color="#0f4c81"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Bonequinho Esquemático à Esquerda -->
+                <g>
+                  <path d="M 30 395 C 30 280, 140 270, 160 395 Z" fill="#0f4c81"/>
+                  <path d="M 72 285 L 96 325 L 120 285 Z" fill="#ffffff"/>
+                  <rect x="82" y="242" width="28" height="38" rx="10" fill="#f5cbb5"/>
+                  <circle cx="96" cy="202" r="42" fill="#fde6d8" stroke="#d6a287" stroke-width="2"/>
+                  <path d="M 54 196 C 54 156, 138 156, 138 196 C 128 175, 64 175, 54 196 Z" fill="#1e293b"/>
+                  <circle cx="82" cy="198" r="3.5" fill="#0f172a"/>
+                  <circle cx="110" cy="198" r="3.5" fill="#0f172a"/>
+                  <path id="paPatientMouth" d="M 85 218 Q 96 226 107 218" fill="none" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round"/>
+                </g>
+
+                <!-- Braço Superior e Antebraço/Mão Distal -->
+                <rect x="132" y="255" width="250" height="92" rx="34" fill="url(#skinGrad)" stroke="#d6a287" stroke-width="2"/>
+                <path
+                  id="distalForearm"
+                  d="M 365 262 L 560 272 C 585 272, 608 262, 622 275 C 632 284, 622 296, 605 298 L 626 303 C 636 306, 634 318, 620 319 L 598 320 L 615 327 C 623 331, 618 341, 605 339 L 565 335 L 365 340 Z"
+                  fill="#fde6d8"
+                  stroke="#d6a287"
+                  stroke-width="2"
+                  style="transition: fill 0.35s ease;"
+                />
+
+                <!-- Indicador de Pulso Radial (Método Palpatório) -->
+                <g transform="translate(532, 314)">
+                  <circle id="radialPulseRing" cx="0" cy="0" r="14" fill="none" stroke="#ef4444" stroke-width="2.2" opacity="0.7"/>
+                  <circle id="radialPulseDot" cx="0" cy="0" r="5.5" fill="#dc2626"/>
+                  <text id="radialPulseLabel" x="0" y="26" text-anchor="middle" font-size="10.5" font-weight="800" fill="#059669">Pulso Radial: Presente</text>
+                </g>
+
+                <!-- Artéria Braquial em Corte Longitudinal -->
+                <path id="arteryLumenPath" d="M 140 286 L 545 296 L 545 314 L 140 314 Z" fill="#991b1b"/>
+                <path id="arteryTopWall" d="M 140 286 L 210 286 Q 275 286 340 286 L 545 296" fill="none" stroke="#ef4444" stroke-width="4"/>
+                <path id="arteryBottomWall" d="M 140 314 L 210 314 Q 275 314 340 314 L 545 314" fill="none" stroke="#ef4444" stroke-width="4"/>
+
+                <!-- Hemácias Animadas -->
+                <g id="rbcContainer"></g>
+
+                <!-- Manguito Inflável -->
+                <g>
+                  <rect id="cuffTopPad" x="205" y="246" width="140" height="16" rx="6" fill="#0284c7" opacity="0.88"/>
+                  <rect id="cuffBottomPad" x="205" y="340" width="140" height="16" rx="6" fill="#0284c7" opacity="0.88"/>
+                  <rect x="200" y="242" width="150" height="118" rx="10" fill="url(#cuffGrad)" fill-opacity="0.25" stroke="#0f4c81" stroke-width="3"/>
+                  <rect x="200" y="242" width="150" height="22" rx="6" fill="#0f4c81"/>
+                  <text x="275" y="257" text-anchor="middle" font-size="10.5" font-weight="800" fill="#ffffff">MANGUITO (75–100%)</text>
+                </g>
+
+                <!-- Estetoscópio na Fossa Cubital -->
+                <g transform="translate(382, 282)">
+                  <path d="M 0 -10 C 0 -48, 35 -58, 52 -82" fill="none" stroke="#334155" stroke-width="4.5" stroke-linecap="round"/>
+                  <circle id="stethoHead" cx="0" cy="0" r="16" fill="#cbd5e1" stroke="#334155" stroke-width="3"/>
+                  <circle cx="0" cy="0" r="9" fill="#0d9488"/>
+                  <g id="korotkoffSoundWaves" opacity="0">
+                    <path d="M -22 -14 Q -30 0 -22 14" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M 22 -14 Q 30 0 22 14" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M -29 -20 Q -40 0 -29 20" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M 29 -20 Q 40 0 29 20" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                  </g>
+                  <text x="0" y="-23" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f4c81">Fossa Cubital</text>
+                </g>
+
+                <!-- Manômetro Aneroide -->
+                <g transform="translate(575, 114)">
+                  <path d="M -300 128 C -300 45, -135 45, -88 15" fill="none" stroke="#1e293b" stroke-width="5" stroke-linecap="round"/>
+                  <circle cx="0" cy="0" r="88" fill="#0f172a"/>
+                  <circle cx="0" cy="0" r="80" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+                  <g id="manometerTicks"></g>
+                  <path id="korotkoffArc" d="" fill="none" stroke="#f59e0b" stroke-width="8" opacity="0.5"/>
+                  <text x="0" y="-33" text-anchor="middle" font-size="9.5" font-weight="800" fill="#64748b">ESFIGMOMANÔMETRO</text>
+                  <text x="0" y="33" text-anchor="middle" font-size="10.5" font-weight="700" fill="#475569">mmHg</text>
+                  <g id="manometerNeedle" transform="rotate(-135)">
+                    <line x1="0" y1="14" x2="0" y2="-66" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="0" cy="0" r="7" fill="#0f172a"/>
+                  </g>
+                  <rect x="-56" y="45" width="112" height="28" rx="6" fill="#0f172a"/>
+                  <text id="manometerDigitalText" x="0" y="64" text-anchor="middle" font-family="monospace" font-size="15" font-weight="800" fill="#38bdf8">0 mmHg</text>
+                </g>
+
+                <!-- Cartão de Status de Korotkoff no SVG -->
+                <g transform="translate(215, 24)">
+                  <rect x="0" y="0" width="255" height="96" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+                  <text x="14" y="21" font-size="10.5" font-weight="800" fill="#64748b">MONITOR DE AUSCULTA (KOROTKOFF)</text>
+                  <text id="svgKorotkoffTitle" x="14" y="45" font-size="14.5" font-weight="800" fill="#059669">Silêncio (Artéria Aberta)</text>
+                  <text id="svgKorotkoffSub" x="14" y="65" font-size="11" fill="#475569">Fluxo laminar contínuo sem ruído</text>
+                  <text id="svgTargetBpLabel" x="14" y="84" font-size="11" font-weight="800" fill="#0f4c81">PA Real do Paciente: 118 × 76 mmHg</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Caixa Explicativa Dinâmica -->
+            <div id="paPhysiologyBox" class="mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed">
+              <h4 id="paPhysioTitle" class="font-extrabold text-slate-900 mb-1">Fluxo Laminar Normal (Manguito &lt; PAD)</h4>
+              <p id="paPhysioDesc">A pressão externa do manguito está abaixo da pressão diastólica. A artéria braquial permanece aberta durante todo o ciclo cardíaco, permitindo fluxo laminar contínuo e silencioso.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles & Tabela SBC 2020 / AHA 2024 -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-200">
+              <h3 class="text-base font-extrabold text-slate-900">Controles do Esfigmomanômetro</h3>
+              <span id="paClassBadge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">Normotensão</span>
+            </div>
+
+            <!-- Perfil Clínico -->
+            <div>
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-2">1. Perfil Clínico do Paciente:</span>
+              <div id="paPresets" class="grid grid-cols-2 gap-2">
+                <button type="button" data-sys="118" data-dia="76" data-label="Normotensão" data-badge="bg-emerald-100 text-emerald-800" class="pa-preset-btn px-3 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer">
+                  Normotenso (118×76)
+                </button>
+                <button type="button" data-sys="136" data-dia="86" data-label="HAS Estágio 1" data-badge="bg-amber-100 text-amber-800" class="pa-preset-btn px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  HAS Estágio 1 (136×86)
+                </button>
+                <button type="button" data-sys="158" data-dia="96" data-label="HAS Estágio 2" data-badge="bg-orange-100 text-orange-800" class="pa-preset-btn px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  HAS Estágio 2 (158×96)
+                </button>
+                <button type="button" data-sys="192" data-dia="124" data-label="Crise Hipertensiva" data-badge="bg-rose-100 text-rose-800" class="pa-preset-btn px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Crise Hipertensiva (192×124)
+                </button>
+              </div>
+            </div>
+
+            <!-- Controle de Pressão do Manguito -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="cuffSlider" class="text-xs font-extrabold uppercase tracking-wider text-slate-600">2. Pressão no Manguito (0–240 mmHg):</label>
+                <span id="cuffPressureVal" class="font-mono-code px-2.5 py-0.5 rounded-md bg-slate-900 text-teal-300 text-xs font-extrabold">0 mmHg</span>
+              </div>
+              <input type="range" id="cuffSlider" min="0" max="240" value="0" step="1" />
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="btnInflateAbovePas" class="flex-1 px-3 py-2.5 rounded-xl bg-[#0f4c81] hover:bg-[#093256] text-white text-xs font-bold cursor-pointer transition">
+                ⬆️ Insuflar (+30 mmHg acima PAS)
+              </button>
+              <button type="button" id="btnAutoDeflate" class="flex-1 px-3 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer transition">
+                ▶️ Deflação Lenta (2–3 mmHg/s)
+              </button>
+              <button type="button" id="btnDeflateZero" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer transition">
+                Zerar
+              </button>
+            </div>
+
+            <!-- Fases de Korotkoff -->
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3.5 text-xs space-y-1.5">
+              <h4 class="font-extrabold text-slate-900">As 5 Fases de Korotkoff:</h4>
+              <p><strong>Fase I (PAS):</strong> Primeiro som claro e nítido quando o pico sistólico vence o manguito.</p>
+              <p><strong>Fase II:</strong> Sons suaves com característica de sopro/murmúrio.</p>
+              <p><strong>Fase III:</strong> Estalidos mais intensos e nítidos com aumento do fluxo.</p>
+              <p><strong>Fase IV:</strong> Abafamento súbito dos sons.</p>
+              <p><strong>Fase V (PAD):</strong> Desaparecimento completo de todos os sons (continuar auscultando 20–30 mmHg abaixo).</p>
+            </div>
+          </div>
+
+          <!-- Tabela SBC 2020 -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <h3 class="text-sm font-extrabold text-slate-900 mb-2">Classificação SBC (2020) &amp; Regra AHA (2024)</h3>
+            <table class="w-full text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700">
+                  <th class="p-2 text-left rounded-tl-lg">Classificação</th>
+                  <th class="p-2 text-left">PAS</th>
+                  <th class="p-2 text-left rounded-tr-lg">PAD</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr><td class="p-2 font-bold text-emerald-700">Normotensão</td><td class="p-2 font-mono-code">&lt; 120</td><td class="p-2 font-mono-code">&lt; 80</td></tr>
+                <tr><td class="p-2 font-bold text-amber-700">HAS Estágio 1</td><td class="p-2 font-mono-code">130–139</td><td class="p-2 font-mono-code">80–89</td></tr>
+                <tr><td class="p-2 font-bold text-orange-700">HAS Estágio 2</td><td class="p-2 font-mono-code">≥ 140</td><td class="p-2 font-mono-code">≥ 90</td></tr>
+                <tr><td class="p-2 font-bold text-rose-700">Crise Hipertensiva</td><td class="p-2 font-mono-code">≥ 180</td><td class="p-2 font-mono-code">≥ 120</td></tr>
+              </tbody>
+            </table>
+            <p class="mt-2.5 text-[11px] text-slate-600">
+              <strong>Nota Técnica (Muntner et al., 2024):</strong> Integre obrigatoriamente os métodos palpatório e auscultatório. Nunca estime a PA pela oscilação do ponteiro.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 3: TERMORREGULAÇÃO & FEBRE (EBSERH)                             -->
+    <!-- =================================================================== -->
+    <section id="tab-febre" class="tab-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- SVG Eixo Hipotálamo + Vasos + Bonequinho + Termômetro -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-amber-700 block">Eixo Hipotalâmico &amp; Resposta Cutânea</span>
+                <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Termorregulação Corporal (Padrão EBSERH)</h2>
+              </div>
+              <span id="feverStageBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
+                Afebril (35,5–36,9 °C)
+              </span>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-amber-50/40 p-3 overflow-hidden">
+              <svg viewBox="0 0 720 415" class="w-full h-auto block" role="img" aria-label="Simulação fisiológica do hipotálamo, vasos periféricos e termômetro clínico">
+                <!-- Hipotálamo (Set Point) -->
+                <g transform="translate(28, 24)">
+                  <rect x="0" y="0" width="230" height="150" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+                  <text x="115" y="21" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f4c81">TERMOSTATO HIPOTALÂMICO</text>
+                  <path d="M 65 94 C 50 94, 42 76, 52 60 C 56 42, 82 34, 106 38 C 130 34, 156 44, 160 64 C 168 80, 156 98, 136 98 L 112 98 L 106 114 L 94 114 L 92 98 Z" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+                  <circle id="hypothalamusNode" cx="104" cy="80" r="11" fill="#059669"/>
+                  <text x="115" y="129" text-anchor="middle" font-size="11" font-weight="800" fill="#0f172a">Hipotálamo Anterior / Posterior</text>
+                  <text id="setPointSvgText" x="115" y="143" text-anchor="middle" font-size="10.5" font-weight="800" fill="#059669">Set Point: 36,5 °C</text>
+                </g>
+
+                <!-- Vasos Periféricos -->
+                <g transform="translate(28, 190)">
+                  <rect x="0" y="0" width="230" height="200" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+                  <text x="115" y="21" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f4c81">VASOMOTRICIDADE PERIFÉRICA</text>
+                  <rect x="20" y="36" width="190" height="68" rx="8" fill="#fde6d8" stroke="#e5b89f"/>
+                  <line id="peripheralVessel" x1="32" y1="70" x2="198" y2="70" stroke="#dc2626" stroke-width="9" stroke-linecap="round" style="transition: all 0.35s ease;"/>
+                  <text id="vesselStatusText" x="115" y="125" text-anchor="middle" font-size="11.5" font-weight="800" fill="#0f172a">Tônus Vascular Equilibrado</text>
+                  <text id="sweatStatusText" x="115" y="145" text-anchor="middle" font-size="10.5" fill="#475569">Sudorese: Basal imperceptível</text>
+                  <text id="muscleStatusText" x="115" y="164" text-anchor="middle" font-size="10.5" fill="#475569">Tônus Muscular: Repouso</text>
+                  <text id="heatBalanceText" x="115" y="185" text-anchor="middle" font-size="11" font-weight="800" fill="#0d9488">Produção = Perda de Calor</text>
+                </g>
+
+                <!-- Seta Neural -->
+                <path d="M 262 96 L 330 96" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="5,4"/>
+                <polygon points="330,91 340,96 330,101" fill="#0284c7"/>
+
+                <!-- Bonequinho Esquemático Central -->
+                <g transform="translate(396, 44)">
+                  <g id="feverPatientBody">
+                    <ellipse id="thermalAura" cx="0" cy="175" rx="86" ry="155" fill="#10b981" opacity="0.12" style="transition: all 0.35s ease;"/>
+                    <circle id="feverHeadSkin" cx="0" cy="52" r="38" fill="#fde6d8" stroke="#cbd5e1" stroke-width="2" style="transition: fill 0.35s ease;"/>
+                    <circle id="cheekLeft" cx="-18" cy="58" r="8" fill="#ef4444" opacity="0"/>
+                    <circle id="cheekRight" cx="18" cy="58" r="8" fill="#ef4444" opacity="0"/>
+                    <circle cx="-13" cy="46" r="3.5" fill="#0f172a"/>
+                    <circle cx="13" cy="46" r="3.5" fill="#0f172a"/>
+                    <path id="feverMouth" d="M -11 66 Q 0 74 11 66" fill="none" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round"/>
+
+                    <rect x="-42" y="96" width="84" height="125" rx="26" fill="#0f4c81"/>
+                    <rect id="feverLeftArm" x="-66" y="102" width="20" height="105" rx="10" fill="#fde6d8" stroke="#cbd5e1" stroke-width="1.5"/>
+                    <rect id="feverRightArm" x="46" y="102" width="20" height="105" rx="10" fill="#fde6d8" stroke="#cbd5e1" stroke-width="1.5"/>
+                    <rect x="-34" y="218" width="26" height="110" rx="12" fill="#334155"/>
+                    <rect x="8" y="218" width="26" height="110" rx="12" fill="#334155"/>
+
+                    <!-- Gotas de Suor -->
+                    <g id="sweatDropsGroup" opacity="0">
+                      <path class="sweat-drop" d="M -44 35 C -48 43, -40 43, -44 35 Z" fill="#0284c7"/>
+                      <path class="sweat-drop" d="M 46 42 C 42 50, 50 50, 46 42 Z" fill="#0284c7" style="animation-delay:0.4s;"/>
+                      <path class="sweat-drop" d="M -32 18 C -36 26, -28 26, -32 18 Z" fill="#0284c7" style="animation-delay:0.8s;"/>
+                    </g>
+
+                    <!-- Linhas de Tremor -->
+                    <g id="shiverLinesGroup" opacity="0" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round">
+                      <path d="M -78 125 Q -84 140 -78 155"/>
+                      <path d="M 78 125 Q 84 140 78 155"/>
+                      <path d="M -52 30 Q -58 45 -52 60"/>
+                      <path d="M 52 30 Q 58 45 52 60"/>
+                    </g>
+                  </g>
+                </g>
+
+                <!-- Termômetro Clínico -->
+                <g transform="translate(562, 28)">
+                  <rect x="0" y="0" width="130" height="362" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+                  <text x="65" y="25" text-anchor="middle" font-size="10.5" font-weight="800" fill="#0f4c81">TERMÔMETRO</text>
+                  <rect x="54" y="44" width="20" height="228" rx="10" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                  <rect id="thermometerFill" x="57" y="182" width="14" height="90" rx="6" fill="#059669" style="transition: all 0.25s ease;"/>
+                  <circle id="thermometerBulb" cx="64" cy="278" r="18" fill="#059669" style="transition: fill 0.25s ease;"/>
+
+                  <line x1="78" y1="56" x2="88" y2="56" stroke="#64748b" stroke-width="1.5"/>
+                  <text x="92" y="60" font-size="10" font-weight="700" fill="#dc2626">41,5°C</text>
+                  <line x1="78" y1="115" x2="88" y2="115" stroke="#64748b" stroke-width="1.5"/>
+                  <text x="92" y="119" font-size="10" font-weight="700" fill="#d97706">39,0°C</text>
+                  <line x1="78" y1="175" x2="88" y2="175" stroke="#64748b" stroke-width="1.5"/>
+                  <text x="92" y="179" font-size="10" font-weight="700" fill="#059669">37,0°C</text>
+                  <line x1="78" y1="235" x2="88" y2="235" stroke="#64748b" stroke-width="1.5"/>
+                  <text x="92" y="239" font-size="10" font-weight="700" fill="#0284c7">34,5°C</text>
+
+                  <rect x="14" y="312" width="102" height="34" rx="8" fill="#0f172a"/>
+                  <text id="thermometerDigitalText" x="65" y="334" text-anchor="middle" font-family="monospace" font-size="16" font-weight="800" fill="#34d399">36,5 °C</text>
+                </g>
+              </svg>
+            </div>
+
+            <div id="feverPhysiologyBox" class="mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed">
+              <h4 id="feverPhysioTitle" class="font-extrabold text-slate-900 mb-1">Afebril / Normotermia (35,5 °C – 36,9 °C)</h4>
+              <p id="feverPhysioDesc">O hipotálamo mantém o ponto de ajuste (set point) em equilíbrio. A produção metabólica de calor equivale à dissipação cutânea e respiratória.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles EBSERH e Fases da Febre -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <h3 class="text-base font-extrabold text-slate-900 pb-3 border-b border-slate-200">Controles de Temperatura (EBSERH)</h3>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="tempSlider" class="text-xs font-extrabold uppercase tracking-wider text-slate-600">1. Temperatura Axilar (34,0–41,5 °C):</label>
+                <span id="tempValPill" class="font-mono-code px-2.5 py-0.5 rounded-md bg-slate-900 text-teal-300 text-xs font-extrabold">36,5 °C</span>
+              </div>
+              <input type="range" id="tempSlider" min="34.0" max="41.5" value="36.5" step="0.1" />
+            </div>
+
+            <div>
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-2">2. Intervalos EBSERH (POP.DENF.038):</span>
+              <div id="tempPresets" class="grid grid-cols-2 gap-2">
+                <button type="button" data-temp="35.0" class="temp-preset-btn px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Hipotermia (&lt; 35,5°C)
+                </button>
+                <button type="button" data-temp="36.5" class="temp-preset-btn px-2.5 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer">
+                  Afebril (35,5–36,9°C)
+                </button>
+                <button type="button" data-temp="37.4" class="temp-preset-btn px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Subfebril (37,0–37,7°C)
+                </button>
+                <button type="button" data-temp="37.9" class="temp-preset-btn px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Febre (&gt; 37,8°C)
+                </button>
+                <button type="button" data-temp="38.6" class="temp-preset-btn px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Febre Moderada (38–39°C)
+                </button>
+                <button type="button" data-temp="39.5" class="temp-preset-btn px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Febre Alta (&gt; 39,0°C)
+                </button>
+                <button type="button" data-temp="40.5" class="temp-preset-btn col-span-2 px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Hiperpirexia (&gt; 40,0°C — Emergência Térmica)
+                </button>
+              </div>
+            </div>
+
+            <!-- 3 Fases Fisiopatológicas da Febre -->
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-2">
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">3. Simulador das 3 Fases da Febre:</span>
+              <div id="feverPhaseButtons" class="flex flex-col gap-2">
+                <button type="button" data-phase="onset" class="w-full text-left px-3 py-2 rounded-lg bg-sky-900 hover:bg-sky-800 text-white text-xs font-bold cursor-pointer transition">
+                  Fase 1: Elevação do Set Point (Vasoconstrição &amp; Calafrios)
+                </button>
+                <button type="button" data-phase="plateau" class="w-full text-left px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition">
+                  Fase 2: Platô Febril (Pele Quente, Rubor &amp; Taquicardia)
+                </button>
+                <button type="button" data-phase="defervescence" class="w-full text-left px-3 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold cursor-pointer transition">
+                  Fase 3: Defervescência / Crise (Vasodilatação &amp; Sudorese)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 4: OXIMETRIA DE PULSO (SpO2)                                    -->
+    <!-- =================================================================== -->
+    <section id="tab-spo2" class="tab-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Espectrofotometria LED 660/940nm + Curva Pletismográfica -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-sky-700 block">Espectrofotometria Óptica Capilar</span>
+                <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Saturação Periférica de Oxigênio (SpO₂)</h2>
+              </div>
+              <span id="spo2StatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
+                Normal (95% – 98%)
+              </span>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-sky-50/70 p-3 overflow-hidden">
+              <svg viewBox="0 0 720 415" class="w-full h-auto block" role="img" aria-label="Corte transversal do dedo no sensor do oxímetro de pulso com luz vermelha 660nm e infravermelha 940nm">
+                <!-- Clipe Superior (Emissores LED) -->
+                <g transform="translate(55, 28)">
+                  <path d="M 0 38 C 0 14, 24 0, 52 0 L 285 0 C 312 0, 335 16, 335 40 L 335 58 L 0 58 Z" fill="#0f172a"/>
+                  <text x="167" y="23" text-anchor="middle" font-size="11" font-weight="800" fill="#f8fafc">SENSOR SUPERIOR • EMISSORES LED</text>
+                  <rect x="85" y="42" width="40" height="16" rx="4" fill="#ef4444"/>
+                  <text x="105" y="36" text-anchor="middle" font-size="10" font-weight="800" fill="#fca5a5">Vermelho (660 nm)</text>
+                  <rect x="210" y="42" width="40" height="16" rx="4" fill="#a855f7"/>
+                  <text x="230" y="36" text-anchor="middle" font-size="10" font-weight="800" fill="#d8b4fe">Infravermelho (940 nm)</text>
+                </g>
+
+                <!-- Feixes Luminosos -->
+                <polygon id="redBeamPoly" points="140,86 180,86 190,264 130,264" fill="#ef4444" opacity="0.28"/>
+                <polygon id="irBeamPoly" points="265,86 305,86 315,264 255,264" fill="#9333ea" opacity="0.24"/>
+
+                <!-- Corte Transversal do Dedo -->
+                <g transform="translate(35, 106)">
+                  <path d="M 0 18 L 300 18 C 350 18, 378 46, 378 78 C 378 110, 350 138, 300 138 L 0 138 Z" fill="#fde6d8" stroke="#d6a287" stroke-width="2.5"/>
+                  <path d="M 285 18 L 340 18 C 357 22, 365 32, 367 40 L 285 40 Z" fill="#fbcfe8" stroke="#f472b6" stroke-width="1.5"/>
+                  <!-- Esmalte Escuro -->
+                  <path id="nailPolishOverlay" d="M 285 16 L 340 16 C 357 20, 365 30, 367 38 L 285 38 Z" fill="#1e1b4b" opacity="0"/>
+                  <!-- Falange -->
+                  <rect x="18" y="96" width="290" height="24" rx="11" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+                  <text x="163" y="112" text-anchor="middle" font-size="10" font-weight="700" fill="#64748b">Falange Distal</text>
+                  <!-- Leito Capilar -->
+                  <rect x="18" y="52" width="320" height="32" rx="14" fill="#7f1d1d"/>
+                  <g id="capillaryHbContainer"></g>
+                </g>
+
+                <!-- Clipe Inferior (Fotodetector) -->
+                <g transform="translate(55, 264)">
+                  <path d="M 0 0 L 335 0 L 335 22 C 335 44, 312 58, 285 58 L 52 58 C 24 58, 0 44, 0 22 Z" fill="#0f172a"/>
+                  <rect x="85" y="0" width="165" height="14" rx="4" fill="#38bdf8"/>
+                  <text x="167" y="33" text-anchor="middle" font-size="11" font-weight="800" fill="#f8fafc">FOTODETECTOR ÓPTICO</text>
+                  <text id="absorptionRatioText" x="167" y="48" text-anchor="middle" font-size="9.5" font-weight="700" fill="#7dd3fc">Alta HbO₂: Absorve + IR (940nm) | Transmite + Vermelho (660nm)</text>
+                </g>
+
+                <!-- Legenda HbO2 vs Hb -->
+                <g transform="translate(55, 336)">
+                  <rect x="0" y="0" width="335" height="54" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+                  <circle cx="22" cy="19" r="7" fill="#ef4444"/>
+                  <text x="36" y="23" font-size="11" font-weight="700" fill="#0f172a">Oxi-hemoglobina (HbO₂): Absorve + Infravermelho</text>
+                  <circle cx="22" cy="39" r="7" fill="#6366f1"/>
+                  <text x="36" y="43" font-size="11" font-weight="700" fill="#0f172a">Desoxi-hemoglobina (Hb): Absorve + Luz Vermelha</text>
+                </g>
+
+                <!-- Monitor Multiparamétrico -->
+                <g transform="translate(420, 28)">
+                  <rect x="0" y="0" width="272" height="362" rx="18" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+                  <text x="136" y="26" text-anchor="middle" font-size="11" font-weight="800" fill="#94a3b8" letter-spacing="1">OXÍMETRO DE PULSO</text>
+
+                  <rect x="18" y="40" width="236" height="106" rx="12" fill="#1e293b"/>
+                  <text x="32" y="64" font-size="13" font-weight="800" fill="#38bdf8">SpO₂ %</text>
+                  <text id="oximeterSpo2Display" x="236" y="128" text-anchor="end" font-family="monospace" font-size="62" font-weight="800" fill="#34d399">97</text>
+
+                  <rect x="18" y="158" width="236" height="54" rx="12" fill="#1e293b"/>
+                  <text x="32" y="180" font-size="11.5" font-weight="800" fill="#f43f5e">PR bpm (Pulso)</text>
+                  <text id="oximeterHrDisplay" x="236" y="201" text-anchor="end" font-family="monospace" font-size="28" font-weight="800" fill="#fb7185">74</text>
+
+                  <!-- Onda Pletismográfica -->
+                  <rect x="18" y="224" width="236" height="118" rx="12" fill="#020617" stroke="#1e293b"/>
+                  <text x="28" y="242" font-size="9.5" font-weight="800" fill="#64748b">CURVA PLETISMOGRÁFICA</text>
+                  <polyline id="plethPolyline" fill="none" stroke="#34d399" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" points=""/>
+                  <text id="interferenceAlertSvg" x="136" y="332" text-anchor="middle" font-size="10.5" font-weight="800" fill="#34d399">Condição Ideal • Boa Perfusão</text>
+                </g>
+              </svg>
+            </div>
+
+            <div id="spo2PhysiologyBox" class="mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed">
+              <h4 id="spo2PhysioTitle" class="font-extrabold text-slate-900 mb-1">Adulto / Idoso Saudável (95% – 98%)</h4>
+              <p id="spo2PhysioDesc">Alta proporção de oxi-hemoglobina (HbO₂) transportando oxigênio nos capilares periféricos. Preditor sensível de estabilidade respiratória.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles & Interferentes -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <h3 class="text-base font-extrabold text-slate-900 pb-3 border-b border-slate-200">Controles de Saturação &amp; Interferências</h3>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="spo2Slider" class="text-xs font-extrabold uppercase tracking-wider text-slate-600">1. Saturação Arterial Real (75%–100%):</label>
+                <span id="spo2ValPill" class="font-mono-code px-2.5 py-0.5 rounded-md bg-slate-900 text-teal-300 text-xs font-extrabold">97%</span>
+              </div>
+              <input type="range" id="spo2Slider" min="75" max="100" value="97" step="1" />
+            </div>
+
+            <div>
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-2">2. Perfis Clínicos (Guia Prático):</span>
+              <div id="spo2Presets" class="grid grid-cols-1 gap-2">
+                <button type="button" data-spo2="98" class="spo2-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Adulto Saudável (95% – 99%)
+                </button>
+                <button type="button" data-spo2="97" class="spo2-preset-btn text-left px-3 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer">
+                  Idoso Saudável (95% – 98%)
+                </button>
+                <button type="button" data-spo2="90" class="spo2-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Idoso com DPOC (88% – 92% • Alvo clínico tolerável)
+                </button>
+                <button type="button" data-spo2="87" class="spo2-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Hipoxemia Moderada (85% – 87%)
+                </button>
+                <button type="button" data-spo2="81" class="spo2-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Emergência Clínica (&lt; 85% • Risco iminente de falência orgânica)
+                </button>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-2">
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">3. Interferências Técnicas no Sensor:</span>
+              <div id="interferenceButtons" class="flex flex-col gap-2">
+                <button type="button" data-int="none" class="int-btn text-left px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-bold cursor-pointer">
+                  ✔ Condição Ideal (Perfusão adequada, dedo limpo)
+                </button>
+                <button type="button" data-int="polish" class="int-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer">
+                  💅 Esmalte Escuro / Unha Postiça (Absorve luz vermelha)
+                </button>
+                <button type="button" data-int="perfusion" class="int-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer">
+                  ❄️ Má Perfusão Periférica / Extremidade Fria
+                </button>
+                <button type="button" data-int="motion" class="int-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer">
+                  〰️ Movimentação Excessiva / Tremor
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ABA 5: GLICEMIA CAPILAR (HGT)                                       -->
+    <!-- =================================================================== -->
+    <section id="tab-hgt" class="tab-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Punção Lateral da Polpa Digital + Fita Reagente + Glicosímetro -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-200">
+              <div>
+                <span class="text-xs font-extrabold uppercase tracking-wider text-teal-700 block">Semiotécnica &amp; Reação Enzimática</span>
+                <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">Glicemia Capilar (HGT) — Técnica Segura</h2>
+              </div>
+              <span id="hgtStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
+                Normoglicemia (70–99 mg/dL)
+              </span>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-teal-50/50 p-3 overflow-hidden">
+              <svg viewBox="0 0 720 415" class="w-full h-auto block" role="img" aria-label="Anatomia da polpa digital mostrando punção lateral segura, fita reagente com glicose oxidase e glicosímetro digital">
+                <!-- Vista Palmar da Polpa Digital (Esquerda) -->
+                <g transform="translate(36, 26)">
+                  <rect x="0" y="0" width="320" height="362" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+                  <text x="160" y="24" text-anchor="middle" font-size="11" font-weight="800" fill="#0f4c81">SÍTIO DE PUNÇÃO CAPILAR (3º, 4º OU 5º DEDO)</text>
+
+                  <!-- Dedo em vista palmar -->
+                  <path d="M 95 335 L 95 145 C 95 85, 225 85, 225 145 L 225 335 Z" fill="#fde6d8" stroke="#d6a287" stroke-width="2.5"/>
+                  <!-- Pregas articulares -->
+                  <path d="M 112 245 Q 160 252 208 245" fill="none" stroke="#d6a287" stroke-width="2"/>
+                  <path d="M 110 305 Q 160 312 210 305" fill="none" stroke="#d6a287" stroke-width="2"/>
+
+                  <!-- Zona Central Proibida (Alta densidade de terminações nervosas e calosidade) -->
+                  <ellipse cx="160" cy="148" rx="34" ry="44" fill="#fee2e2" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,4"/>
+                  <text x="160" y="144" text-anchor="middle" font-size="9.5" font-weight="800" fill="#991b1b">EVITAR CENTRO</text>
+                  <text x="160" y="157" text-anchor="middle" font-size="8.5" font-weight="700" fill="#b91c1c">+ Dor e calosidade</text>
+
+                  <!-- Zonas Laterais Corretas (Borda lateral da falange distal) -->
+                  <ellipse cx="108" cy="148" rx="10" ry="34" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+                  <ellipse cx="212" cy="148" rx="10" ry="34" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+                  <text x="52" y="144" text-anchor="middle" font-size="9.5" font-weight="800" fill="#065f46">BORDA</text>
+                  <text x="52" y="156" text-anchor="middle" font-size="9.5" font-weight="800" fill="#065f46">LATERAL</text>
+                  <line x1="78" y1="148" x2="96" y2="148" stroke="#059669" stroke-width="2"/>
+
+                  <!-- Lancetador / Lanceta Estéril -->
+                  <g id="lancetGroup" transform="translate(242, 134)">
+                    <rect x="14" y="0" width="54" height="26" rx="6" fill="#0f4c81"/>
+                    <polygon points="14,7 0,13 14,19" fill="#94a3b8"/>
+                    <text x="41" y="17" text-anchor="middle" font-size="9" font-weight="800" fill="#ffffff">LANCETA</text>
+                  </g>
+
+                  <!-- Gota de Sangue Capilar -->
+                  <path id="bloodDropPath" d="M 216 142 C 209 154, 223 154, 216 142 Z" fill="#dc2626" opacity="0.25" style="transition: all 0.3s ease;"/>
+
+                  <!-- Nota de Antissepsia -->
+                  <rect x="18" y="318" width="284" height="32" rx="8" fill="#f0f9ff" stroke="#bae6fd"/>
+                  <text id="hgtStepCaption" x="160" y="338" text-anchor="middle" font-size="10" font-weight="800" fill="#0369a1">
+                    Passo 1: Higienizar com álcool 70% e aguardar secar totalmente
+                  </text>
+                </g>
+
+                <!-- Glicosímetro + Fita Reagente Enzimática (Direita) -->
+                <g transform="translate(382, 26)">
+                  <rect x="0" y="0" width="302" height="362" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+                  <text x="151" y="24" text-anchor="middle" font-size="11" font-weight="800" fill="#0f4c81">GLICOSÍMETRO &amp; FITA REAGENTE</text>
+
+                  <!-- Corpo do Glicosímetro -->
+                  <rect x="76" y="42" width="150" height="205" rx="22" fill="#0f172a" stroke="#334155" stroke-width="3"/>
+                  <!-- Visor LCD -->
+                  <rect x="94" y="64" width="114" height="86" rx="10" fill="#1e293b"/>
+                  <text x="104" y="82" font-size="9.5" font-weight="800" fill="#38bdf8">GLICEMIA (HGT)</text>
+                  <text id="glucometerLcdValue" x="198" y="126" text-anchor="end" font-family="monospace" font-size="40" font-weight="800" fill="#34d399">92</text>
+                  <text x="198" y="142" text-anchor="end" font-size="10.5" font-weight="800" fill="#94a3b8">mg/dL</text>
+
+                  <!-- Botões do aparelho -->
+                  <circle cx="132" cy="182" r="10" fill="#334155"/>
+                  <circle cx="170" cy="182" r="10" fill="#334155"/>
+
+                  <!-- Fita Reagente inserida na base -->
+                  <rect x="135" y="247" width="32" height="78" rx="4" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+                  <!-- Câmara enzimática (Glicose Oxidase) -->
+                  <rect id="stripReactionZone" x="139" y="294" width="24" height="26" rx="3" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+                  <text x="151" y="344" text-anchor="middle" font-size="10" font-weight="800" fill="#0f172a">Zona Enzimática: Glicose Oxidase</text>
+                  <text id="enzymeCurrentText" x="151" y="356" text-anchor="middle" font-size="9.5" font-weight="700" fill="#0d9488">Microcorrente proporcional à glicose</text>
+                </g>
+              </svg>
+            </div>
+
+            <!-- Conduta e Manifestações Clínicas -->
+            <div id="hgtPhysiologyBox" class="mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed">
+              <h4 id="hgtPhysioTitle" class="font-extrabold text-slate-900 mb-1">Normoglicemia em Jejum (70 – 99 mg/dL)</h4>
+              <p id="hgtPhysioDesc">Nível glicêmico adequado para homeostase energética cerebral e tecidual. Registrar o valor, horário e relação com a última refeição no prontuário.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles & Sequência de 4 Passos -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <h3 class="text-base font-extrabold text-slate-900 pb-3 border-b border-slate-200">Controles de Glicemia &amp; Procedimento</h3>
+
+            <!-- Slider HGT -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="hgtSlider" class="text-xs font-extrabold uppercase tracking-wider text-slate-600">1. Glicemia Capilar (35–450 mg/dL):</label>
+                <span id="hgtValPill" class="font-mono-code px-2.5 py-0.5 rounded-md bg-slate-900 text-teal-300 text-xs font-extrabold">92 mg/dL</span>
+              </div>
+              <input type="range" id="hgtSlider" min="35" max="450" value="92" step="1" />
+            </div>
+
+            <!-- Perfis Clínicos de HGT -->
+            <div>
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-slate-600 mb-2">2. Cenários Clínicos Glicêmicos:</span>
+              <div id="hgtPresets" class="grid grid-cols-1 gap-2">
+                <button type="button" data-hgt="46" class="hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Hipoglicemia Grave (&lt; 54 mg/dL • Neuroglicopenia)
+                </button>
+                <button type="button" data-hgt="62" class="hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Hipoglicemia (54 – 69 mg/dL • Tremores/Sudorese)
+                </button>
+                <button type="button" data-hgt="92" class="hgt-preset-btn text-left px-3 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer">
+                  Normoglicemia em Jejum (70 – 99 mg/dL)
+                </button>
+                <button type="button" data-hgt="128" class="hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Pós-Prandial Normal (&lt; 140 mg/dL após 2h)
+                </button>
+                <button type="button" data-hgt="114" class="hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Pré-Diabetes / Jejum Alterado (100 – 125 mg/dL)
+                </button>
+                <button type="button" data-hgt="225" class="hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Hiperglicemia / DM Descompensado (≥ 126 jejum / ≥ 200 casual)
+                </button>
+                <button type="button" data-hgt="365" class="hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer">
+                  Emergência Hiperglicêmica (&gt; 300 mg/dL • Risco CAD/EHH)
+                </button>
+              </div>
+            </div>
+
+            <!-- Sequência Interativa dos 4 Passos Técnicos -->
+            <div class="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-2">
+              <span class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">3. Sequência Técnica de Coleta (4 Passos):</span>
+              <div id="hgtStepButtons" class="grid grid-cols-1 gap-1.5">
+                <button type="button" data-step="1" class="hgt-step-btn text-left px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-bold cursor-pointer">
+                  Passo 1: Higienizar e escolher borda lateral (3º–5º dedo)
+                </button>
+                <button type="button" data-step="2" class="hgt-step-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer">
+                  Passo 2: Punção firme na lateral da polpa digital
+                </button>
+                <button type="button" data-step="3" class="hgt-step-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer">
+                  Passo 3: Capilaridade da gota na fita (sem ordenhar forte)
+                </button>
+                <button type="button" data-step="4" class="hgt-step-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer">
+                  Passo 4: Reação da Glicose Oxidase &amp; Descarte em perfurocortante
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- RODAPÉ -->
+  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 py-5 px-4 sm:px-6 lg:px-8 text-xs sm:text-sm mt-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+      <p><strong class="text-white">VICTOR FONTES PRODUÇÕES</strong> • Victor Fontes, 2026 — Simulador Fisiológico Interativo &amp; Práticas Seguras.</p>
+      <a href="index.html" class="text-teal-300 hover:text-teal-200 font-bold">← Voltar ao Portal Inicial</a>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MOTOR INTERATIVO: FISIOLOGIA, ANIMAÇÃO VETORIAL E ÁUDIO               -->
+  <!-- ===================================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      /* -------------------------------------------------------------------
+       * 0. FALLBACK DA MARCA & NAVEGAÇÃO ENTRE AS 5 ABAS
+       * ------------------------------------------------------------------- */
+      const logoImg = document.getElementById("brandLogoImg");
+      const logoFallback = document.getElementById("brandLogoFallback");
+      logoImg.addEventListener("error", function () {
+        logoImg.classList.add("hidden");
+        logoFallback.classList.remove("hidden");
+        logoFallback.classList.add("flex");
+      });
+      if (logoImg.complete && logoImg.naturalWidth === 0) {
+        logoImg.classList.add("hidden");
+        logoFallback.classList.remove("hidden");
+        logoFallback.classList.add("flex");
+      }
+
+      let activeTabId = "tab-praticas";
+      const tabButtons = document.querySelectorAll(".tab-btn");
+      const tabPanels = document.querySelectorAll(".tab-panel");
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-tab");
+          activeTabId = target;
+
+          tabButtons.forEach((b) => {
+            b.classList.remove("active");
+            b.setAttribute("aria-selected", "false");
+          });
+          btn.classList.add("active");
+          btn.setAttribute("aria-selected", "true");
+
+          tabPanels.forEach((p) => {
+            p.classList.toggle("active", p.id === target);
+          });
+        });
+      });
+
+      /* -------------------------------------------------------------------
+       * 1. ABA 1: PRÁTICAS SEGURAS & POSICIONAMENTO DO PACIENTE
+       * ------------------------------------------------------------------- */
+      const selArmPos = document.getElementById("selArmPos");
+      const selCuffSize = document.getElementById("selCuffSize");
+      const selLegs = document.getElementById("selLegs");
+      const selBack = document.getElementById("selBack");
+      const selRest = document.getElementById("selRest");
+      const selBladder = document.getElementById("selBladder");
+      const selTalk = document.getElementById("selTalk");
+      const selStimulants = document.getElementById("selStimulants");
+
+      const patientArmGroup = document.getElementById("patientArmGroup");
+      const armSupportTable = document.getElementById("armSupportTable");
+      const torsoAndHeadGroup = document.getElementById("torsoAndHeadGroup");
+      const legsNormalGroup = document.getElementById("legsNormalGroup");
+      const legsCrossedGroup = document.getElementById("legsCrossedGroup");
+      const speechBubbleGroup = document.getElementById("speechBubbleGroup");
+      const postureMouth = document.getElementById("postureMouth");
+      const bladderIndicator = document.getElementById("bladderIndicator");
+      const bladderSvgTag = document.getElementById("bladderSvgTag");
+      const postureCuffRect = document.getElementById("postureCuffRect");
+      const postureCuffLabel = document.getElementById("postureCuffLabel");
+      const noRestWaves = document.getElementById("noRestWaves");
+
+      const postureStatusBadge = document.getElementById("postureStatusBadge");
+      const deltaBadge = document.getElementById("deltaBadge");
+      const distortedBpText = document.getElementById("distortedBpText");
+      const distortedHrFrText = document.getElementById("distortedHrFrText");
+      const measuredDistortedCard = document.getElementById("measuredDistortedCard");
+      const postureExplanationBox = document.getElementById("postureExplanationBox");
+
+      function updatePostureSimulation() {
+        let dSys = 0;
+        let dDia = 0;
+        let dHr = 0;
+        let dFr = 0;
+        const errors = [];
+
+        // 1. Posição do braço
+        const arm = selArmPos.value;
+        if (arm === "heart") {
+          patientArmGroup.setAttribute("transform", "rotate(0, 224, 148)");
+          armSupportTable.setAttribute("opacity", "1");
+        } else if (arm === "low") {
+          patientArmGroup.setAttribute("transform", "rotate(46, 224, 148)");
+          armSupportTable.setAttribute("opacity", "0.25");
+          dSys += 8;
+          dDia += 6;
+          errors.push("Braço abaixo do nível do coração (+8/+6 mmHg por pressão hidrostática da coluna de sangue).");
+        } else {
+          patientArmGroup.setAttribute("transform", "rotate(-32, 224, 148)");
+          armSupportTable.setAttribute("opacity", "0.25");
+          dSys -= 8;
+          dDia -= 6;
+          errors.push("Braço acima do nível do coração (-8/-6 mmHg por redução hidrostática).");
+        }
+
+        // 2. Manguito
+        const cuff = selCuffSize.value;
+        if (cuff === "ok") {
+          postureCuffRect.setAttribute("x", "252");
+          postureCuffRect.setAttribute("width", "66");
+          postureCuffRect.setAttribute("fill", "#0284c7");
+          postureCuffLabel.textContent = "Manguito OK";
+        } else if (cuff === "small") {
+          postureCuffRect.setAttribute("x", "266");
+          postureCuffRect.setAttribute("width", "38");
+          postureCuffRect.setAttribute("fill", "#dc2626");
+          postureCuffLabel.textContent = "Estreito!";
+          dSys += 18;
+          dDia += 12;
+          errors.push("Manguito pequeno/estreito (+18/+12 mmHg): exige pressão excessiva para comprimir a artéria braquial.");
+        } else {
+          postureCuffRect.setAttribute("x", "238");
+          postureCuffRect.setAttribute("width", "94");
+          postureCuffRect.setAttribute("fill", "#d97706");
+          postureCuffLabel.textContent = "Largo!";
+          dSys -= 12;
+          dDia -= 8;
+          errors.push("Manguito excessivamente grande (-12/-8 mmHg): subestima falsamente a pressão arterial.");
+        }
+
+        // 3. Pernas
+        if (selLegs.value === "crossed") {
+          legsNormalGroup.setAttribute("opacity", "0.18");
+          legsCrossedGroup.setAttribute("opacity", "1");
+          dSys += 6;
+          dDia += 5;
+          errors.push("Pernas cruzadas (+6/+5 mmHg): comprime veias dos membros inferiores e eleva a resistência vascular.");
+        } else {
+          legsNormalGroup.setAttribute("opacity", "1");
+          legsCrossedGroup.setAttribute("opacity", "0");
+        }
+
+        // 4. Dorso
+        if (selBack.value === "unsupported") {
+          torsoAndHeadGroup.setAttribute("transform", "rotate(12, 210, 248)");
+          dSys += 6;
+          dDia += 5;
+          errors.push("Dorso sem apoio (+6/+5 mmHg): contração muscular isométrica para sustentar o tronco.");
+        } else {
+          torsoAndHeadGroup.setAttribute("transform", "rotate(0, 210, 248)");
+        }
+
+        // 5. Repouso
+        if (selRest.value === "active") {
+          noRestWaves.setAttribute("opacity", "1");
+          dSys += 14;
+          dDia += 8;
+          dHr += 18;
+          dFr += 6;
+          errors.push("Sem repouso de 3–5 min (+14/+8 mmHg, +18 bpm, +6 irpm): débito cardíaco ainda elevado pelo esforço.");
+        } else {
+          noRestWaves.setAttribute("opacity", "0");
+        }
+
+        // 6. Bexiga
+        if (selBladder.value === "full") {
+          bladderIndicator.setAttribute("fill", "#f59e0b");
+          bladderIndicator.setAttribute("opacity", "0.95");
+          bladderIndicator.setAttribute("rx", "15");
+          bladderIndicator.setAttribute("ry", "11");
+          bladderSvgTag.textContent = "Bexiga Cheia!";
+          bladderSvgTag.setAttribute("fill", "#b45309");
+          dSys += 12;
+          dDia += 8;
+          errors.push("Bexiga cheia (+12/+8 mmHg): descarga simpática reflexa por distensão vesical.");
+        } else {
+          bladderIndicator.setAttribute("fill", "#38bdf8");
+          bladderIndicator.setAttribute("opacity", "0.35");
+          bladderIndicator.setAttribute("rx", "11");
+          bladderIndicator.setAttribute("ry", "8");
+          bladderSvgTag.textContent = "Bexiga Vazia";
+          bladderSvgTag.setAttribute("fill", "#64748b");
+        }
+
+        // 7. Fala
+        if (selTalk.value === "talking") {
+          speechBubbleGroup.setAttribute("opacity", "1");
+          postureMouth.setAttribute("d", "M 214 78 Q 222 88 228 78 Q 222 74 214 78");
+          dSys += 9;
+          dDia += 7;
+          errors.push("Paciente falando durante o exame (+9/+7 mmHg): eleva imediatamente a pressão intratorácica e arterial.");
+        } else {
+          speechBubbleGroup.setAttribute("opacity", "0");
+          postureMouth.setAttribute("d", "M 214 80 Q 222 84 228 80");
+        }
+
+        // 8. Substâncias
+        if (selStimulants.value === "yes") {
+          dSys += 10;
+          dDia += 7;
+          dHr += 12;
+          errors.push("Café, álcool ou tabaco há <30 min (+10/+7 mmHg, +12 bpm): vasoconstrição e estímulo adrenérgico.");
+        }
+
+        const finalSys = Math.max(70, 118 + dSys);
+        const finalDia = Math.max(40, 76 + dDia);
+        const finalHr = 72 + dHr;
+        const finalFr = 16 + dFr;
+
+        distortedBpText.innerHTML = `${finalSys} × ${finalDia} <small class="text-xs font-bold">mmHg</small>`;
+        const sign = dSys > 0 ? "+" : "";
+        deltaBadge.textContent = dSys === 0 && dDia === 0 ? "±0 mmHg" : `${sign}${dSys}/${dDia >= 0 && dDia !== 0 ? "+" : ""}${dDia} mmHg`;
+
+        if (errors.length === 0) {
+          postureStatusBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800";
+          postureStatusBadge.textContent = "Protocolo Ideal (0 Erros)";
+          deltaBadge.className = "px-2 py-0.5 rounded-md font-mono-code text-xs font-extrabold bg-emerald-100 text-emerald-800";
+          measuredDistortedCard.className = "rounded-xl bg-emerald-50 border border-emerald-200 p-4 transition-colors";
+          distortedHrFrText.textContent = `FC: ${finalHr} bpm • FR: ${finalFr} irpm • Leitura Fidedigna`;
+          postureExplanationBox.className = "mt-4 rounded-xl p-4 bg-sky-50 border-l-4 border-sky-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          postureExplanationBox.innerHTML =
+            "<strong>Excelência Técnica:</strong> Todos os pré-requisitos do protocolo foram cumpridos. O braço está apoiado ao nível do coração, o dorso recostado, as pernas descruzadas com pés no chão e o manguito cobre de 75% a 100% da circunferência braquial.";
+        } else {
+          postureStatusBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800";
+          postureStatusBadge.textContent = `${errors.length} Erro(s) de Técnica`;
+          deltaBadge.className = "px-2 py-0.5 rounded-md font-mono-code text-xs font-extrabold bg-rose-100 text-rose-800";
+          measuredDistortedCard.className = "rounded-xl bg-rose-50 border border-rose-200 p-4 transition-colors";
+          distortedHrFrText.textContent = `FC: ${finalHr} bpm • FR: ${finalFr} irpm • Distorção Iatrogênica`;
+          postureExplanationBox.className = "mt-4 rounded-xl p-4 bg-amber-50 border-l-4 border-amber-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          postureExplanationBox.innerHTML =
+            "<strong>Impacto dos Erros Selecionados:</strong><ul class='list-disc pl-5 mt-1 space-y-1'>" +
+            errors.map((err) => `<li>${err}</li>`).join("") +
+            "</ul>";
+        }
+      }
+
+      [selArmPos, selCuffSize, selLegs, selBack, selRest, selBladder, selTalk, selStimulants].forEach((el) => {
+        el.addEventListener("change", updatePostureSimulation);
+      });
+
+      document.getElementById("btnIdealProtocol").addEventListener("click", () => {
+        selArmPos.value = "heart";
+        selCuffSize.value = "ok";
+        selLegs.value = "uncrossed";
+        selBack.value = "supported";
+        selRest.value = "rested";
+        selBladder.value = "empty";
+        selTalk.value = "silent";
+        selStimulants.value = "none";
+        updatePostureSimulation();
+      });
+
+      document.getElementById("btnClassicError").addEventListener("click", () => {
+        selArmPos.value = "low";
+        selCuffSize.value = "small";
+        selLegs.value = "crossed";
+        selBack.value = "unsupported";
+        selRest.value = "active";
+        selBladder.value = "empty";
+        selTalk.value = "talking";
+        selStimulants.value = "none";
+        updatePostureSimulation();
+      });
+
+      /* -------------------------------------------------------------------
+       * 2. ABA 2: PRESSÃO ARTERIAL & SONS DE KOROTKOFF (COM WEB AUDIO)
+       * ------------------------------------------------------------------- */
+      let audioCtx = null;
+      let korotkoffSoundOn = false;
+      const toggleKorotkoffAudioBtn = document.getElementById("toggleKorotkoffAudioBtn");
+
+      function ensureAudioCtx() {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) audioCtx = new AC();
+        }
+        if (audioCtx && audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      }
+
+      function playKorotkoffThud(gainLevel = 0.8) {
+        if (!korotkoffSoundOn || !audioCtx) return;
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(118, now);
+        osc.frequency.exponentialRampToValueAtTime(42, now + 0.14);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.45 * gainLevel, now + 0.014);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.17);
+      }
+
+      toggleKorotkoffAudioBtn.addEventListener("click", () => {
+        korotkoffSoundOn = !korotkoffSoundOn;
+        if (korotkoffSoundOn) {
+          ensureAudioCtx();
+          toggleKorotkoffAudioBtn.textContent = "🔊 Áudio do Estetoscópio Ativo";
+          toggleKorotkoffAudioBtn.classList.remove("bg-slate-900");
+          toggleKorotkoffAudioBtn.classList.add("bg-teal-600");
+          playKorotkoffThud(0.6);
+        } else {
+          toggleKorotkoffAudioBtn.textContent = "🔇 Ativar Áudio do Estetoscópio";
+          toggleKorotkoffAudioBtn.classList.remove("bg-teal-600");
+          toggleKorotkoffAudioBtn.classList.add("bg-slate-900");
+        }
+      });
+
+      const paState = {
+        systolic: 118,
+        diastolic: 76,
+        cuffPressure: 0,
+        autoDeflating: false,
+        rbcs: []
+      };
+
+      const cuffSlider = document.getElementById("cuffSlider");
+      const cuffPressureVal = document.getElementById("cuffPressureVal");
+      const manometerNeedle = document.getElementById("manometerNeedle");
+      const manometerDigitalText = document.getElementById("manometerDigitalText");
+      const manometerTicks = document.getElementById("manometerTicks");
+      const korotkoffArc = document.getElementById("korotkoffArc");
+
+      const arteryTopWall = document.getElementById("arteryTopWall");
+      const arteryBottomWall = document.getElementById("arteryBottomWall");
+      const arteryLumenPath = document.getElementById("arteryLumenPath");
+      const cuffTopPad = document.getElementById("cuffTopPad");
+      const cuffBottomPad = document.getElementById("cuffBottomPad");
+      const distalForearm = document.getElementById("distalForearm");
+      const radialPulseDot = document.getElementById("radialPulseDot");
+      const radialPulseRing = document.getElementById("radialPulseRing");
+      const radialPulseLabel = document.getElementById("radialPulseLabel");
+      const korotkoffSoundWaves = document.getElementById("korotkoffSoundWaves");
+
+      const paPhaseBadge = document.getElementById("paPhaseBadge");
+      const paClassBadge = document.getElementById("paClassBadge");
+      const svgKorotkoffTitle = document.getElementById("svgKorotkoffTitle");
+      const svgKorotkoffSub = document.getElementById("svgKorotkoffSub");
+      const svgTargetBpLabel = document.getElementById("svgTargetBpLabel");
+      const paPhysiologyBox = document.getElementById("paPhysiologyBox");
+      const paPhysioTitle = document.getElementById("paPhysioTitle");
+      const paPhysioDesc = document.getElementById("paPhysioDesc");
+      const paPatientMouth = document.getElementById("paPatientMouth");
+
+      function buildManometerDial() {
+        for (let p = 0; p <= 240; p += 20) {
+          const angleDeg = -135 + (p / 240) * 270;
+          const angleRad = (angleDeg - 90) * (Math.PI / 180);
+          const x1 = Math.cos(angleRad) * 66;
+          const y1 = Math.sin(angleRad) * 66;
+          const x2 = Math.cos(angleRad) * 75;
+          const y2 = Math.sin(angleRad) * 75;
+
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", x1);
+          line.setAttribute("y1", y1);
+          line.setAttribute("x2", x2);
+          line.setAttribute("y2", y2);
+          line.setAttribute("stroke", "#334155");
+          line.setAttribute("stroke-width", "2");
+          manometerTicks.appendChild(line);
+
+          if (p % 40 === 0) {
+            const tx = Math.cos(angleRad) * 53;
+            const ty = Math.sin(angleRad) * 53 + 3;
+            const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            txt.setAttribute("x", tx);
+            txt.setAttribute("y", ty);
+            txt.setAttribute("text-anchor", "middle");
+            txt.setAttribute("font-size", "9");
+            txt.setAttribute("font-weight", "800");
+            txt.setAttribute("fill", "#0f172a");
+            txt.textContent = p;
+            manometerTicks.appendChild(txt);
+          }
+        }
+      }
+
+      function updateKorotkoffArc() {
+        const startAngle = (-135 + (paState.diastolic / 240) * 270 - 90) * (Math.PI / 180);
+        const endAngle = (-135 + (paState.systolic / 240) * 270 - 90) * (Math.PI / 180);
+        const r = 71;
+        const x1 = Math.cos(startAngle) * r;
+        const y1 = Math.sin(startAngle) * r;
+        const x2 = Math.cos(endAngle) * r;
+        const y2 = Math.sin(endAngle) * r;
+        const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+        korotkoffArc.setAttribute("d", `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`);
+      }
+
+      const rbcContainer = document.getElementById("rbcContainer");
+      function initRBCs() {
+        rbcContainer.innerHTML = "";
+        paState.rbcs = [];
+        for (let i = 0; i < 24; i++) {
+          const el = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+          el.setAttribute("rx", "6");
+          el.setAttribute("ry", "3.8");
+          el.setAttribute("fill", "#fca5a5");
+          el.setAttribute("stroke", "#fee2e2");
+          el.setAttribute("stroke-width", "0.8");
+          rbcContainer.appendChild(el);
+          paState.rbcs.push({
+            el,
+            x: 145 + i * 16.5,
+            yOffset: ((i % 3) - 1) * 5
+          });
+        }
+      }
+
+      function updatePAVisuals(instantPulseFactor = 0) {
+        const P = paState.cuffPressure;
+        const PAS = paState.systolic;
+        const PAD = paState.diastolic;
+
+        cuffPressureVal.textContent = `${P} mmHg`;
+        manometerDigitalText.textContent = `${P} mmHg`;
+        const needleAngle = -135 + (P / 240) * 270;
+        manometerNeedle.setAttribute("transform", `rotate(${needleAngle})`);
+
+        let compression = 0;
+        if (P >= PAS) {
+          compression = 1;
+        } else if (P > PAD) {
+          const baseComp = (P - PAD) / (PAS - PAD);
+          compression = Math.max(0.18, baseComp * (1 - instantPulseFactor * 0.68));
+        } else {
+          compression = (P / Math.max(1, PAD)) * 0.14;
+        }
+
+        const padGrow = Math.min(18, (P / 240) * 18);
+        cuffTopPad.setAttribute("height", 14 + padGrow);
+        cuffBottomPad.setAttribute("y", 342 - padGrow);
+        cuffBottomPad.setAttribute("height", 14 + padGrow);
+
+        const pinch = compression * 13.5;
+        const topMidY = 286 + pinch;
+        const botMidY = 314 - pinch;
+
+        arteryTopWall.setAttribute("d", `M 140 286 L 210 286 Q 275 ${topMidY} 340 286 L 545 296`);
+        arteryBottomWall.setAttribute("d", `M 140 314 L 210 314 Q 275 ${botMidY} 340 314 L 545 314`);
+        arteryLumenPath.setAttribute(
+          "d",
+          `M 140 286 L 210 286 Q 275 ${topMidY} 340 286 L 545 296 L 545 314 L 340 314 Q 275 ${botMidY} 210 314 L 140 314 Z`
+        );
+
+        if (P >= PAS) {
+          distalForearm.setAttribute("fill", "#e2e8f0");
+          radialPulseDot.setAttribute("fill", "#64748b");
+          radialPulseRing.setAttribute("opacity", "0");
+          radialPulseLabel.textContent = "Pulso Radial: ABOLIDO";
+          radialPulseLabel.setAttribute("fill", "#dc2626");
+          paPatientMouth.setAttribute("d", "M 85 222 Q 96 216 107 222");
+
+          paPhaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800";
+          paPhaseBadge.textContent = "Oclusão Total • Silêncio";
+
+          svgKorotkoffTitle.textContent = "Silêncio Supra-Sistólico";
+          svgKorotkoffTitle.setAttribute("fill", "#dc2626");
+          svgKorotkoffSub.textContent = `Manguito (${P}) ≥ PAS (${PAS}): Sem circulação`;
+
+          paPhysiologyBox.className = "mt-4 rounded-xl p-4 bg-rose-50 border-l-4 border-rose-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          paPhysioTitle.textContent = `Oclusão Arterial Completa (Manguito ${P} mmHg ≥ PAS ${PAS} mmHg)`;
+          paPhysioDesc.textContent =
+            "A pressão do manguito supera a pressão sistólica. A artéria braquial fecha totalmente, interrompendo a passagem de hemácias, abolindo o pulso radial (base do Método Palpatório) e deixando a mão distal pálida.";
+        } else if (P > PAD && P < PAS) {
+          distalForearm.setAttribute("fill", "#fcd5ce");
+          radialPulseDot.setAttribute("fill", "#d97706");
+          radialPulseRing.setAttribute("opacity", instantPulseFactor > 0.3 ? "0.9" : "0.2");
+          radialPulseLabel.textContent = "Pulso Radial: Intermitente";
+          radialPulseLabel.setAttribute("fill", "#d97706");
+          paPatientMouth.setAttribute("d", "M 85 220 L 107 220");
+
+          const ratio = (P - PAD) / Math.max(1, PAS - PAD);
+          let faseName = "Fase III (Estalidos Intensos)";
+          if (ratio >= 0.85) faseName = "Fase I (PAS • 1º Som Claro)";
+          else if (ratio >= 0.62) faseName = "Fase II (Sopro Suave)";
+          else if (ratio <= 0.16) faseName = "Fase IV (Abafamento dos Sons)";
+
+          paPhaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800";
+          paPhaseBadge.textContent = `${faseName} • Audível`;
+
+          svgKorotkoffTitle.textContent = `🔊 ${faseName}`;
+          svgKorotkoffTitle.setAttribute("fill", "#d97706");
+          svgKorotkoffSub.textContent = "Fluxo turbilhonado vence o manguito na sístole";
+
+          paPhysiologyBox.className = "mt-4 rounded-xl p-4 bg-amber-50 border-l-4 border-amber-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          paPhysioTitle.textContent = `${faseName} (${PAD} mmHg < Manguito ${P} mmHg < ${PAS} mmHg)`;
+          paPhysioDesc.textContent =
+            ratio >= 0.85
+              ? `FASE I DE KOROTKOFF (PAS = ${PAS} mmHg): Ao desinsuflar lentamente, o pico sistólico vence pela primeira vez a resistência do manguito, produzindo o primeiro som claro que define a Pressão Sistólica.`
+              : "A artéria abre apenas durante a sístole e colaba na diástole. Esse jato sanguíneo intermitente vibra a parede arterial sob o diafragma do estetoscópio até atingir a pressão diastólica.";
+        } else {
+          distalForearm.setAttribute("fill", "#fde6d8");
+          radialPulseDot.setAttribute("fill", "#059669");
+          radialPulseRing.setAttribute("opacity", instantPulseFactor > 0.3 ? "0.9" : "0.25");
+          radialPulseLabel.textContent = "Pulso Radial: Cheio e Rítmico";
+          radialPulseLabel.setAttribute("fill", "#059669");
+          paPatientMouth.setAttribute("d", "M 85 218 Q 96 226 107 218");
+
+          const isJustBelowPad = P > 0 && P <= PAD && P >= PAD - 12;
+          paPhaseBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800";
+          paPhaseBadge.textContent = isJustBelowPad ? "Fase V (PAD) • Silêncio" : "Artéria Livre • Silêncio";
+
+          svgKorotkoffTitle.textContent = isJustBelowPad ? `Fase V: Desaparecimento (PAD = ${PAD})` : "Silêncio (Artéria Aberta)";
+          svgKorotkoffTitle.setAttribute("fill", "#059669");
+          svgKorotkoffSub.textContent = isJustBelowPad
+            ? "Continue auscultando 20–30 mmHg para confirmar"
+            : "Fluxo laminar contínuo sem turbulência";
+
+          paPhysiologyBox.className = "mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          paPhysioTitle.textContent = isJustBelowPad
+            ? `Fase V de Korotkoff — Pressão Diastólica (${PAD} mmHg)`
+            : `Fluxo Laminar Contínuo (Manguito ${P} mmHg ≤ PAD ${PAD} mmHg)`;
+          paPhysioDesc.textContent =
+            "Quando a pressão do manguito cai igual ou abaixo da Pressão Diastólica (Fase V), o vaso permanece aberto durante todo o ciclo cardíaco. O turbilhonamento desaparece e o estetoscópio retorna ao silêncio.";
+        }
+      }
+
+      cuffSlider.addEventListener("input", (e) => {
+        paState.autoDeflating = false;
+        paState.cuffPressure = parseInt(e.target.value, 10);
+        updatePAVisuals();
+      });
+
+      document.getElementById("paPresets").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document.querySelectorAll(".pa-preset-btn").forEach((b) => {
+          b.className = "pa-preset-btn px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer";
+        });
+        btn.className = "pa-preset-btn px-3 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer";
+
+        paState.systolic = parseInt(btn.getAttribute("data-sys"), 10);
+        paState.diastolic = parseInt(btn.getAttribute("data-dia"), 10);
+        paClassBadge.className = `px-2.5 py-1 rounded-full text-xs font-extrabold ${btn.getAttribute("data-badge")}`;
+        paClassBadge.textContent = btn.getAttribute("data-label");
+        svgTargetBpLabel.textContent = `PA Real do Paciente: ${paState.systolic} × ${paState.diastolic} mmHg`;
+
+        updateKorotkoffArc();
+        updatePAVisuals();
+      });
+
+      document.getElementById("btnInflateAbovePas").addEventListener("click", () => {
+        ensureAudioCtx();
+        paState.autoDeflating = false;
+        const target = Math.min(240, paState.systolic + 30);
+        paState.cuffPressure = target;
+        cuffSlider.value = target;
+        updatePAVisuals();
+      });
+
+      document.getElementById("btnDeflateZero").addEventListener("click", () => {
+        paState.autoDeflating = false;
+        paState.cuffPressure = 0;
+        cuffSlider.value = 0;
+        updatePAVisuals();
+      });
+
+      document.getElementById("btnAutoDeflate").addEventListener("click", () => {
+        ensureAudioCtx();
+        if (paState.cuffPressure <= paState.diastolic) {
+          const target = Math.min(240, paState.systolic + 30);
+          paState.cuffPressure = target;
+          cuffSlider.value = target;
+        }
+        paState.autoDeflating = !paState.autoDeflating;
+      });
+
+      /* -------------------------------------------------------------------
+       * 3. ABA 3: TERMORREGULAÇÃO & FEBRE (EBSERH)
+       * ------------------------------------------------------------------- */
+      const tempSlider = document.getElementById("tempSlider");
+      const tempValPill = document.getElementById("tempValPill");
+      const thermometerFill = document.getElementById("thermometerFill");
+      const thermometerBulb = document.getElementById("thermometerBulb");
+      const thermometerDigitalText = document.getElementById("thermometerDigitalText");
+      const feverStageBadge = document.getElementById("feverStageBadge");
+      const setPointSvgText = document.getElementById("setPointSvgText");
+      const hypothalamusNode = document.getElementById("hypothalamusNode");
+      const peripheralVessel = document.getElementById("peripheralVessel");
+      const vesselStatusText = document.getElementById("vesselStatusText");
+      const sweatStatusText = document.getElementById("sweatStatusText");
+      const muscleStatusText = document.getElementById("muscleStatusText");
+      const heatBalanceText = document.getElementById("heatBalanceText");
+      const feverPatientBody = document.getElementById("feverPatientBody");
+      const thermalAura = document.getElementById("thermalAura");
+      const feverHeadSkin = document.getElementById("feverHeadSkin");
+      const feverLeftArm = document.getElementById("feverLeftArm");
+      const feverRightArm = document.getElementById("feverRightArm");
+      const cheekLeft = document.getElementById("cheekLeft");
+      const cheekRight = document.getElementById("cheekRight");
+      const feverMouth = document.getElementById("feverMouth");
+      const sweatDropsGroup = document.getElementById("sweatDropsGroup");
+      const shiverLinesGroup = document.getElementById("shiverLinesGroup");
+      const feverPhysiologyBox = document.getElementById("feverPhysiologyBox");
+      const feverPhysioTitle = document.getElementById("feverPhysioTitle");
+      const feverPhysioDesc = document.getElementById("feverPhysioDesc");
+
+      function updateTemperatureView(tempVal, forcedPhase = null) {
+        const T = parseFloat(tempVal);
+        tempSlider.value = T;
+        const formatted = T.toFixed(1).replace(".", ",") + " °C";
+        tempValPill.textContent = formatted;
+        thermometerDigitalText.textContent = formatted;
+
+        const norm = Math.max(0, Math.min(1, (T - 34.0) / (41.5 - 34.0)));
+        const colHeight = 26 + norm * 192;
+        const colY = 272 - colHeight;
+        thermometerFill.setAttribute("y", colY);
+        thermometerFill.setAttribute("height", colHeight);
+
+        let stageText = "Afebril (35,5–36,9 °C)";
+        let badgeCls = "bg-emerald-100 text-emerald-800";
+        let colorHex = "#059669";
+        let boxCls = "mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+        let title = `Afebril / Normotermia (${formatted})`;
+        let desc = "O centro termorregulador hipotalâmico mantém o ponto de ajuste (set point) em equilíbrio. A produção de calor equivale à dissipação térmica.";
+
+        if (T < 35.5) {
+          stageText = "Hipotermia (< 35,5 °C)";
+          badgeCls = "bg-sky-100 text-sky-900";
+          colorHex = "#0284c7";
+          boxCls = "mt-4 rounded-xl p-4 bg-sky-50 border-l-4 border-sky-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Hipotermia (${formatted}) — Perda Excessiva de Calor`;
+          desc = "Temperatura abaixo de 35,5 °C. O hipotálamo dispara vasoconstrição cutânea intensa e tremores musculares involuntários (calafrios) para gerar termogênese e conservar calor.";
+        } else if (T <= 36.9) {
+          // Já configurado como padrão acima
+        } else if (T <= 37.7) {
+          stageText = "Subfebril (37,0–37,7 °C)";
+          badgeCls = "bg-amber-100 text-amber-800";
+          colorHex = "#d97706";
+          boxCls = "mt-4 rounded-xl p-4 bg-amber-50 border-l-4 border-amber-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Estado Subfebril (${formatted})`;
+          desc = "Elevação discreta da temperatura axilar (37,0 °C – 37,7 °C). Pode representar fase inicial de resposta inflamatória ou variação metabólica; exige monitoração seriada.";
+        } else if (T < 38.0) {
+          stageText = "Febre (> 37,8 °C)";
+          badgeCls = "bg-orange-100 text-orange-800";
+          colorHex = "#ea580c";
+          boxCls = "mt-4 rounded-xl p-4 bg-orange-50 border-l-4 border-orange-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Febre Estabelecida (${formatted})`;
+          desc = "Acima de 37,8 °C (padrão EBSERH). Pirógenos endógenos estimulam prostaglandina E2 no hipotálamo, elevando o set point térmico.";
+        } else if (T <= 39.0) {
+          stageText = "Febre Moderada (38,0–39,0 °C)";
+          badgeCls = "bg-rose-100 text-rose-800";
+          colorHex = "#dc2626";
+          boxCls = "mt-4 rounded-xl p-4 bg-rose-50 border-l-4 border-rose-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Febre Moderada (${formatted})`;
+          desc = "Temperatura entre 38,0 °C e 39,0 °C. Elevação da taxa metabólica basal, aumento do consumo de oxigênio, taquicardia e taquipneia compensatórias.";
+        } else if (T <= 40.0) {
+          stageText = "Febre Alta (> 39,0 °C)";
+          badgeCls = "bg-rose-200 text-rose-900";
+          colorHex = "#b91c1c";
+          boxCls = "mt-4 rounded-xl p-4 bg-rose-50 border-l-4 border-rose-700 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Febre Alta (${formatted})`;
+          desc = "Temperatura superior a 39,0 °C. Requer vigilância clínica contínua, hidratação e antitérmicos prescritos.";
+        } else {
+          stageText = "Hiperpirexia (> 40,0 °C)";
+          badgeCls = "bg-rose-600 text-white";
+          colorHex = "#7f1d1d";
+          boxCls = "mt-4 rounded-xl p-4 bg-rose-100 border-l-4 border-rose-800 text-xs sm:text-sm text-slate-900 leading-relaxed";
+          title = `Hiperpirexia — Alerta Crítico (${formatted})`;
+          desc = "Acima de 40,0 °C. Risco elevado de desnaturação enzimática, dano neurológico e convulsões febris. Intervenção médica imediata.";
+        }
+
+        thermometerFill.setAttribute("fill", colorHex);
+        thermometerBulb.setAttribute("fill", colorHex);
+        feverStageBadge.className = `px-3 py-1 rounded-full text-xs font-extrabold ${badgeCls}`;
+        feverStageBadge.textContent = stageText;
+        feverPhysiologyBox.className = boxCls;
+        feverPhysioTitle.textContent = title;
+        feverPhysioDesc.textContent = desc;
+
+        feverPatientBody.classList.remove("shiver-active");
+        shiverLinesGroup.setAttribute("opacity", "0");
+        sweatDropsGroup.setAttribute("opacity", "0");
+        cheekLeft.setAttribute("opacity", "0");
+        cheekRight.setAttribute("opacity", "0");
+
+        if (forcedPhase === "onset" || T < 35.5) {
+          setPointSvgText.textContent = T < 35.5 ? "Set Point: 36,5 °C" : "Set Point Elevado: 39,0 °C";
+          setPointSvgText.setAttribute("fill", "#0284c7");
+          hypothalamusNode.setAttribute("fill", "#0284c7");
+
+          peripheralVessel.setAttribute("stroke-width", "3.5");
+          peripheralVessel.setAttribute("stroke", "#3b82f6");
+          vesselStatusText.textContent = "Vasoconstrição Periférica Intensa";
+          sweatStatusText.textContent = "Sudorese: Suprimida (conserva calor)";
+          muscleStatusText.textContent = "Calafrios: Tremores gerando calor";
+          heatBalanceText.textContent = "Termogênese Ativa";
+
+          feverHeadSkin.setAttribute("fill", "#dbeafe");
+          feverLeftArm.setAttribute("fill", "#dbeafe");
+          feverRightArm.setAttribute("fill", "#dbeafe");
+          thermalAura.setAttribute("fill", "#38bdf8");
+          thermalAura.setAttribute("opacity", "0.22");
+          feverMouth.setAttribute("d", "M -12 68 Q -6 64 0 68 Q 6 72 12 68");
+          feverPatientBody.classList.add("shiver-active");
+          shiverLinesGroup.setAttribute("opacity", "1");
+
+          if (forcedPhase === "onset") {
+            feverPhysioTitle.textContent = "Fase 1: Elevação do Set Point Hipotalâmico (Calafrios)";
+            feverPhysioDesc.textContent =
+              "Pirógenos reajustam o hipotálamo para 39,0 °C. Como o sangue ainda está em 37,5 °C, o organismo dispara vasoconstrição periférica (pele fria/pálida) e calafrios musculares para gerar calor.";
+          }
+        } else if (forcedPhase === "defervescence") {
+          setPointSvgText.textContent = "Set Point Reduzido: 36,5 °C";
+          setPointSvgText.setAttribute("fill", "#059669");
+          hypothalamusNode.setAttribute("fill", "#059669");
+
+          peripheralVessel.setAttribute("stroke-width", "16");
+          peripheralVessel.setAttribute("stroke", "#ef4444");
+          vesselStatusText.textContent = "Vasodilatação Periférica Máxima";
+          sweatStatusText.textContent = "Sudorese Profusa: Evaporação resfria a pele";
+          muscleStatusText.textContent = "Tônus Muscular: Relaxado";
+          heatBalanceText.textContent = "Dissipação Ativa de Calor";
+
+          feverHeadSkin.setAttribute("fill", "#fecaca");
+          feverLeftArm.setAttribute("fill", "#fecaca");
+          feverRightArm.setAttribute("fill", "#fecaca");
+          cheekLeft.setAttribute("opacity", "0.75");
+          cheekRight.setAttribute("opacity", "0.75");
+          thermalAura.setAttribute("fill", "#0ea5e9");
+          thermalAura.setAttribute("opacity", "0.18");
+          sweatDropsGroup.setAttribute("opacity", "1");
+
+          feverPhysioTitle.textContent = "Fase 3: Defervescência / Crise (Sudorese Profusa)";
+          feverPhysioDesc.textContent =
+            "Após antitérmicos ou eliminação do pirógeno, o set point volta a 36,5 °C. O hipotálamo promove vasodilatação cutânea (rubor) e sudorese intensa para dissipar o excesso de calor.";
+        } else if (T >= 37.8) {
+          setPointSvgText.textContent = `Set Point Elevado: ${formatted}`;
+          setPointSvgText.setAttribute("fill", "#dc2626");
+          hypothalamusNode.setAttribute("fill", "#dc2626");
+
+          peripheralVessel.setAttribute("stroke-width", "14");
+          peripheralVessel.setAttribute("stroke", "#dc2626");
+          vesselStatusText.textContent = "Vasodilatação Cutânea (Pele Quente)";
+          sweatStatusText.textContent = "Pele Quente e Ruborizada";
+          muscleStatusText.textContent = "Metabolismo Acelerado (+10% / °C)";
+          heatBalanceText.textContent = "Platô Febril em Patamar Alto";
+
+          feverHeadSkin.setAttribute("fill", "#fecaca");
+          feverLeftArm.setAttribute("fill", "#fecaca");
+          feverRightArm.setAttribute("fill", "#fecaca");
+          cheekLeft.setAttribute("opacity", "0.7");
+          cheekRight.setAttribute("opacity", "0.7");
+          thermalAura.setAttribute("fill", "#ef4444");
+          thermalAura.setAttribute("opacity", "0.24");
+          feverMouth.setAttribute("d", "M -10 69 Q 0 63 10 69");
+          if (T >= 39.5) sweatDropsGroup.setAttribute("opacity", "0.8");
+        } else {
+          setPointSvgText.textContent = `Set Point: ${formatted}`;
+          setPointSvgText.setAttribute("fill", "#059669");
+          hypothalamusNode.setAttribute("fill", "#059669");
+
+          peripheralVessel.setAttribute("stroke-width", "9");
+          peripheralVessel.setAttribute("stroke", "#dc2626");
+          vesselStatusText.textContent = "Tônus Vascular Equilibrado";
+          sweatStatusText.textContent = "Sudorese: Basal imperceptível";
+          muscleStatusText.textContent = "Tônus Muscular: Repouso";
+          heatBalanceText.textContent = "Produção = Perda de Calor";
+
+          feverHeadSkin.setAttribute("fill", "#fde6d8");
+          feverLeftArm.setAttribute("fill", "#fde6d8");
+          feverRightArm.setAttribute("fill", "#fde6d8");
+          thermalAura.setAttribute("fill", "#10b981");
+          thermalAura.setAttribute("opacity", "0.12");
+          feverMouth.setAttribute("d", "M -11 66 Q 0 74 11 66");
+        }
+      }
+
+      tempSlider.addEventListener("input", (e) => {
+        document.querySelectorAll(".temp-preset-btn").forEach((b) => {
+          b.className = "temp-preset-btn px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer";
+        });
+        updateTemperatureView(e.target.value);
+      });
+
+      document.getElementById("tempPresets").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document.querySelectorAll(".temp-preset-btn").forEach((b) => {
+          b.className = "temp-preset-btn px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer";
+        });
+        btn.className = "temp-preset-btn px-2.5 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer";
+        updateTemperatureView(btn.getAttribute("data-temp"));
+      });
+
+      document.getElementById("feverPhaseButtons").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        const phase = btn.getAttribute("data-phase");
+        if (phase === "onset") updateTemperatureView(37.6, "onset");
+        else if (phase === "plateau") updateTemperatureView(39.0, "plateau");
+        else if (phase === "defervescence") updateTemperatureView(37.4, "defervescence");
+      });
+
+      /* -------------------------------------------------------------------
+       * 4. ABA 4: OXIMETRIA DE PULSO (SpO2)
+       * ------------------------------------------------------------------- */
+      const spo2State = {
+        realSpo2: 97,
+        interference: "none",
+        hbMolecules: [],
+        plethHistory: new Array(75).fill(315)
+      };
+
+      const spo2Slider = document.getElementById("spo2Slider");
+      const spo2ValPill = document.getElementById("spo2ValPill");
+      const spo2StatusBadge = document.getElementById("spo2StatusBadge");
+      const oximeterSpo2Display = document.getElementById("oximeterSpo2Display");
+      const oximeterHrDisplay = document.getElementById("oximeterHrDisplay");
+      const nailPolishOverlay = document.getElementById("nailPolishOverlay");
+      const redBeamPoly = document.getElementById("redBeamPoly");
+      const irBeamPoly = document.getElementById("irBeamPoly");
+      const absorptionRatioText = document.getElementById("absorptionRatioText");
+      const interferenceAlertSvg = document.getElementById("interferenceAlertSvg");
+      const spo2PhysiologyBox = document.getElementById("spo2PhysiologyBox");
+      const spo2PhysioTitle = document.getElementById("spo2PhysioTitle");
+      const spo2PhysioDesc = document.getElementById("spo2PhysioDesc");
+      const capillaryHbContainer = document.getElementById("capillaryHbContainer");
+      const plethPolyline = document.getElementById("plethPolyline");
+
+      function initCapillaryMolecules() {
+        capillaryHbContainer.innerHTML = "";
+        spo2State.hbMolecules = [];
+        for (let i = 0; i < 22; i++) {
+          const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          c.setAttribute("r", "5.5");
+          c.setAttribute("stroke", "#ffffff");
+          c.setAttribute("stroke-width", "0.9");
+          capillaryHbContainer.appendChild(c);
+          spo2State.hbMolecules.push({
+            el: c,
+            x: 24 + i * 14,
+            y: 62 + (i % 3) * 6
+          });
+        }
+      }
+
+      function updateSpo2View() {
+        const sat = spo2State.realSpo2;
+        const intf = spo2State.interference;
+        spo2ValPill.textContent = `${sat}%`;
+
+        let displayedSat = sat;
+        const hr = sat < 85 ? 118 : sat < 92 ? 94 : 74;
+
+        nailPolishOverlay.setAttribute("opacity", intf === "polish" ? "0.92" : "0");
+
+        if (intf === "polish") {
+          displayedSat = Math.max(72, sat - 9);
+          redBeamPoly.setAttribute("opacity", "0.08");
+          irBeamPoly.setAttribute("opacity", "0.08");
+          interferenceAlertSvg.textContent = "⚠️ Artefato: Esmalte escuro bloqueia LED";
+          interferenceAlertSvg.setAttribute("fill", "#fbbf24");
+        } else if (intf === "perfusion") {
+          displayedSat = Math.max(70, sat - 11);
+          redBeamPoly.setAttribute("opacity", "0.14");
+          irBeamPoly.setAttribute("opacity", "0.14");
+          interferenceAlertSvg.textContent = "⚠️ Alerta: Baixa Perfusão Periférica";
+          interferenceAlertSvg.setAttribute("fill", "#fbbf24");
+        } else if (intf === "motion") {
+          displayedSat = Math.max(74, Math.min(99, sat - 5));
+          redBeamPoly.setAttribute("opacity", "0.28");
+          irBeamPoly.setAttribute("opacity", "0.24");
+          interferenceAlertSvg.textContent = "⚠️ Artefato de Movimento Detectado";
+          interferenceAlertSvg.setAttribute("fill", "#fbbf24");
+        } else {
+          redBeamPoly.setAttribute("opacity", "0.28");
+          irBeamPoly.setAttribute("opacity", "0.24");
+          interferenceAlertSvg.textContent = "Condição Ideal • Boa Perfusão";
+          interferenceAlertSvg.setAttribute("fill", "#34d399");
+        }
+
+        oximeterSpo2Display.textContent = displayedSat;
+        oximeterHrDisplay.textContent = hr;
+
+        const oxyCount = Math.round((sat / 100) * spo2State.hbMolecules.length);
+        spo2State.hbMolecules.forEach((mol, idx) => {
+          mol.el.setAttribute("fill", idx < oxyCount ? "#ef4444" : "#6366f1");
+        });
+
+        if (sat >= 95) {
+          absorptionRatioText.textContent = "Alta HbO₂: Absorve + IR (940nm) | Transmite + Vermelho (660nm)";
+          spo2StatusBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800";
+          spo2StatusBadge.textContent = "Saturação Normal (95% – 98%)";
+          oximeterSpo2Display.setAttribute("fill", "#34d399");
+          plethPolyline.setAttribute("stroke", "#34d399");
+          spo2PhysiologyBox.className = "mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          spo2PhysioTitle.textContent = `Oxigenação Arterial Adequada (${sat}%)`;
+          spo2PhysioDesc.textContent = "Entre 95% e 98% da hemoglobina está ligada ao oxigênio (HbO₂). A luz vermelha (660 nm) atravessa facilmente o leito capilar até o fotodetector.";
+        } else if (sat >= 88) {
+          absorptionRatioText.textContent = "HbO₂ Moderada: Aumento da absorção de Luz Vermelha (660nm)";
+          spo2StatusBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800";
+          spo2StatusBadge.textContent = "Alvo DPOC (88% – 92%)";
+          oximeterSpo2Display.setAttribute("fill", "#fbbf24");
+          plethPolyline.setAttribute("stroke", "#fbbf24");
+          spo2PhysiologyBox.className = "mt-4 rounded-xl p-4 bg-amber-50 border-l-4 border-amber-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          spo2PhysioTitle.textContent = `Idosos com DPOC — Alvo Clínico Tolerável (${sat}%)`;
+          spo2PhysioDesc.textContent = "Em idosos com DPOC, valores entre 88% e 92% representam o alvo clínico tolerável. Em pacientes sem pneumopatia crônica, indica hipoxemia leve.";
+        } else if (sat >= 85) {
+          absorptionRatioText.textContent = "Elevada Desoxi-hemoglobina (Hb): Forte absorção em 660 nm";
+          spo2StatusBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-orange-100 text-orange-800";
+          spo2StatusBadge.textContent = "Hipoxemia Moderada (85% – 87%)";
+          oximeterSpo2Display.setAttribute("fill", "#fb923c");
+          plethPolyline.setAttribute("stroke", "#fb923c");
+          spo2PhysiologyBox.className = "mt-4 rounded-xl p-4 bg-orange-50 border-l-4 border-orange-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          spo2PhysioTitle.textContent = `Hipoxemia Moderada (${sat}%)`;
+          spo2PhysioDesc.textContent = "Predomínio crescente de desoxi-hemoglobina (Hb), que absorve intensamente a luz vermelha (660 nm). Requer avaliação respiratória imediata.";
+        } else {
+          absorptionRatioText.textContent = "Predomínio de Hb Desoxigenada: Queda crítica no detector 660 nm";
+          spo2StatusBadge.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800";
+          spo2StatusBadge.textContent = "Emergência Clínica (< 85%)";
+          oximeterSpo2Display.setAttribute("fill", "#f87171");
+          plethPolyline.setAttribute("stroke", "#f87171");
+          spo2PhysiologyBox.className = "mt-4 rounded-xl p-4 bg-rose-50 border-l-4 border-rose-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          spo2PhysioTitle.textContent = `Emergência Clínica (${sat}%) — Risco Iminente de Falência Orgânica`;
+          spo2PhysioDesc.textContent = "Valores inferiores a 85% indicam hipoxemia grave e risco iminente de falência orgânica. Exige suporte ventilatório e oxigenoterapia urgentes.";
+        }
+
+        if (intf !== "none") {
+          spo2PhysiologyBox.className = "mt-4 rounded-xl p-4 bg-amber-50 border-l-4 border-amber-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          spo2PhysioTitle.textContent = `⚠️ Leitura Distorcida por Interferência (${displayedSat}% exibido vs ${sat}% real)`;
+          spo2PhysioDesc.textContent =
+            intf === "polish"
+              ? "Esmalte escuro ou unha postiça absorve/dispersa a luz emitida pelos LEDs antes de atingir o leito capilar."
+              : intf === "perfusion"
+              ? "Má perfusão periférica ou extremidade fria reduz o sinal pulsátil arterial, achatando a curva pletismográfica."
+              : "Movimentação excessiva ou tremor introduz ruído mecânico na onda pletismográfica.";
+        }
+      }
+
+      spo2Slider.addEventListener("input", (e) => {
+        document.querySelectorAll(".spo2-preset-btn").forEach((b) => {
+          b.className = "spo2-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer";
+        });
+        spo2State.realSpo2 = parseInt(e.target.value, 10);
+        updateSpo2View();
+      });
+
+      document.getElementById("spo2Presets").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document.querySelectorAll(".spo2-preset-btn").forEach((b) => {
+          b.className = "spo2-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer";
+        });
+        btn.className = "spo2-preset-btn text-left px-3 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer";
+        spo2State.realSpo2 = parseInt(btn.getAttribute("data-spo2"), 10);
+        spo2Slider.value = spo2State.realSpo2;
+        updateSpo2View();
+      });
+
+      document.getElementById("interferenceButtons").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document.querySelectorAll(".int-btn").forEach((b) => {
+          b.className = "int-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer";
+        });
+        btn.className = "int-btn text-left px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-bold cursor-pointer";
+        spo2State.interference = btn.getAttribute("data-int");
+        updateSpo2View();
+      });
+
+      /* -------------------------------------------------------------------
+       * 5. ABA 5: GLICEMIA CAPILAR (HGT)
+       * ------------------------------------------------------------------- */
+      const hgtSlider = document.getElementById("hgtSlider");
+      const hgtValPill = document.getElementById("hgtValPill");
+      const hgtStatusBadge = document.getElementById("hgtStatusBadge");
+      const glucometerLcdValue = document.getElementById("glucometerLcdValue");
+      const stripReactionZone = document.getElementById("stripReactionZone");
+      const hgtPhysiologyBox = document.getElementById("hgtPhysiologyBox");
+      const hgtPhysioTitle = document.getElementById("hgtPhysioTitle");
+      const hgtPhysioDesc = document.getElementById("hgtPhysioDesc");
+      const lancetGroup = document.getElementById("lancetGroup");
+      const bloodDropPath = document.getElementById("bloodDropPath");
+      const hgtStepCaption = document.getElementById("hgtStepCaption");
+
+      function updateHgtView(val) {
+        const g = parseInt(val, 10);
+        hgtSlider.value = g;
+        hgtValPill.textContent = `${g} mg/dL`;
+        glucometerLcdValue.textContent = g;
+
+        let badgeText = "Normoglicemia (70–99 mg/dL)";
+        let badgeCls = "bg-emerald-100 text-emerald-800";
+        let lcdColor = "#34d399";
+        let stripFill = "#fef3c7";
+        let boxCls = "mt-4 rounded-xl p-4 bg-emerald-50 border-l-4 border-emerald-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+        let title = `Normoglicemia em Jejum (${g} mg/dL)`;
+        let desc = "Glicemia capilar dentro da faixa fisiológica de jejum (70 a 99 mg/dL). Registrar valor, horário e status alimentar no prontuário.";
+
+        if (g < 54) {
+          badgeText = "Hipoglicemia Grave (< 54 mg/dL)";
+          badgeCls = "bg-rose-600 text-white";
+          lcdColor = "#f87171";
+          stripFill = "#fecaca";
+          boxCls = "mt-4 rounded-xl p-4 bg-rose-100 border-l-4 border-rose-700 text-xs sm:text-sm text-slate-900 leading-relaxed";
+          title = `Hipoglicemia Grave (${g} mg/dL) — Neuroglicopenia`;
+          desc = "Queda crítica da glicose cerebral: confusão mental, sonolência, visão turva, risco de convulsão e coma. Se consciente, aplicar Regra dos 15g de carboidrato simples; se rebaixado, acesso venoso e glicose hipertônica EV conforme prescrição.";
+        } else if (g < 70) {
+          badgeText = "Hipoglicemia (54–69 mg/dL)";
+          badgeCls = "bg-rose-100 text-rose-800";
+          lcdColor = "#fb7185";
+          stripFill = "#fee2e2";
+          boxCls = "mt-4 rounded-xl p-4 bg-rose-50 border-l-4 border-rose-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Hipoglicemia (${g} mg/dL) — Resposta Adrenérgica`;
+          desc = "Ativação simpática com tremores, sudorese fria, palidez, taquicardia e fome intensa. Ofertar 15g de carboidrato de absorção rápida e reavaliar HGT em 15 minutos.";
+        } else if (g <= 99) {
+          // Padrão normoglicemia
+        } else if (g <= 125) {
+          badgeText = "Pré-Diabetes / Jejum Alterado (100–125 mg/dL)";
+          badgeCls = "bg-amber-100 text-amber-800";
+          lcdColor = "#fbbf24";
+          stripFill = "#fde68a";
+          boxCls = "mt-4 rounded-xl p-4 bg-amber-50 border-l-4 border-amber-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Glicemia de Jejum Alterada / Pré-Diabetes (${g} mg/dL)`;
+          desc = "Entre 100 e 125 mg/dL em jejum indica intolerância à glicose (se pós-prandial até 2h, valores < 140 mg/dL são considerados normais).";
+        } else if (g <= 139) {
+          badgeText = "Pós-Prandial Normal (< 140 mg/dL)";
+          badgeCls = "bg-sky-100 text-sky-900";
+          lcdColor = "#38bdf8";
+          stripFill = "#bae6fd";
+          boxCls = "mt-4 rounded-xl p-4 bg-sky-50 border-l-4 border-sky-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Glicemia Pós-Prandial Fisiológica (${g} mg/dL)`;
+          desc = "Até 2 horas após a refeição, valores inferiores a 140 mg/dL representam resposta insulínica adequada. Em jejum, valores ≥ 126 mg/dL sugerem Diabetes Mellitus.";
+        } else if (g <= 300) {
+          badgeText = "Hiperglicemia (≥ 140 / ≥ 200 mg/dL)";
+          badgeCls = "bg-orange-100 text-orange-800";
+          lcdColor = "#fb923c";
+          stripFill = "#fed7aa";
+          boxCls = "mt-4 rounded-xl p-4 bg-orange-50 border-l-4 border-orange-600 text-xs sm:text-sm text-slate-800 leading-relaxed";
+          title = `Hiperglicemia (${g} mg/dL)`;
+          desc = "Elevação glicêmica acima do alvo terapêutico. Avaliar sintomas clássicos (poliúria, polidipsia, polifagia), adesão medicamentosa e esquema de insulinoterapia prescrito.";
+        } else {
+          badgeText = "Emergência Hiperglicêmica (> 300 mg/dL)";
+          badgeCls = "bg-rose-600 text-white";
+          lcdColor = "#f87171";
+          stripFill = "#fca5a5";
+          boxCls = "mt-4 rounded-xl p-4 bg-rose-100 border-l-4 border-rose-700 text-xs sm:text-sm text-slate-900 leading-relaxed";
+          title = `Emergência Hiperglicêmica (${g} mg/dL) — Risco de CAD / EHH`;
+          desc = "Glicemia > 300 mg/dL com risco de Cetoacidose Diabética (hálito cetônico, respiração de Kussmaul, náuseas) ou Estado Hiperglicêmico Hiperosmolar (desidratação grave). Comunicar imediatamente equipe médica.";
+        }
+
+        hgtStatusBadge.className = `px-3 py-1 rounded-full text-xs font-extrabold ${badgeCls}`;
+        hgtStatusBadge.textContent = badgeText;
+        glucometerLcdValue.setAttribute("fill", lcdColor);
+        stripReactionZone.setAttribute("fill", stripFill);
+        hgtPhysiologyBox.className = boxCls;
+        hgtPhysioTitle.textContent = title;
+        hgtPhysioDesc.textContent = desc;
+      }
+
+      hgtSlider.addEventListener("input", (e) => {
+        document.querySelectorAll(".hgt-preset-btn").forEach((b) => {
+          b.className = "hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer";
+        });
+        updateHgtView(e.target.value);
+      });
+
+      document.getElementById("hgtPresets").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document.querySelectorAll(".hgt-preset-btn").forEach((b) => {
+          b.className = "hgt-preset-btn text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold cursor-pointer";
+        });
+        btn.className = "hgt-preset-btn text-left px-3 py-2 rounded-xl border border-sky-600 bg-sky-900 text-white text-xs font-bold cursor-pointer";
+        updateHgtView(btn.getAttribute("data-hgt"));
+      });
+
+      document.getElementById("hgtStepButtons").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document.querySelectorAll(".hgt-step-btn").forEach((b) => {
+          b.className = "hgt-step-btn text-left px-3 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold cursor-pointer";
+        });
+        btn.className = "hgt-step-btn text-left px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-bold cursor-pointer";
+
+        const step = btn.getAttribute("data-step");
+        if (step === "1") {
+          lancetGroup.setAttribute("transform", "translate(242, 134)");
+          bloodDropPath.setAttribute("d", "M 216 142 C 209 154, 223 154, 216 142 Z");
+          bloodDropPath.setAttribute("opacity", "0.25");
+          hgtStepCaption.textContent = "Passo 1: Higienizar com álcool 70% e aguardar secar totalmente";
+        } else if (step === "2") {
+          lancetGroup.setAttribute("transform", "translate(216, 134)");
+          bloodDropPath.setAttribute("d", "M 216 140 C 206 158, 226 158, 216 140 Z");
+          bloodDropPath.setAttribute("opacity", "0.95");
+          hgtStepCaption.textContent = "Passo 2: Punção na borda lateral da falange distal (menos dolorosa)";
+        } else if (step === "3") {
+          lancetGroup.setAttribute("transform", "translate(246, 134)");
+          bloodDropPath.setAttribute("d", "M 216 138 C 203 162, 229 162, 216 138 Z");
+          bloodDropPath.setAttribute("opacity", "1");
+          hgtStepCaption.textContent = "Passo 3: Encostar ponta da fita na gota sem espremer o dedo";
+        } else {
+          lancetGroup.setAttribute("transform", "translate(246, 134)");
+          bloodDropPath.setAttribute("opacity", "0.6");
+          hgtStepCaption.textContent = "Passo 4: Glicose oxidase gera corrente elétrica e exibe mg/dL";
+        }
+      });
+
+      /* -------------------------------------------------------------------
+       * 6. LOOP DE ANIMAÇÃO CONTÍNUA (60 FPS)
+       * ------------------------------------------------------------------- */
+      let lastTime = performance.now();
+      let cardiacTimer = 0;
+      let deflateTimer = 0;
+      let plethTimer = 0;
+
+      function animateLoop(now) {
+        const dt = Math.min(0.1, (now - lastTime) / 1000);
+        lastTime = now;
+
+        cardiacTimer += dt;
+        const beatPeriod = 0.8;
+        const prevPhase = (cardiacTimer - dt) % beatPeriod;
+        const currPhase = cardiacTimer % beatPeriod;
+        const isNewBeat = currPhase < prevPhase;
+        const pulseWave = currPhase < 0.28 ? Math.sin((currPhase / 0.28) * Math.PI) : 0;
+
+        if (paState.autoDeflating) {
+          deflateTimer += dt;
+          if (deflateTimer >= 0.34) {
+            deflateTimer = 0;
+            if (paState.cuffPressure > 0) {
+              paState.cuffPressure = Math.max(0, paState.cuffPressure - 1);
+              cuffSlider.value = paState.cuffPressure;
+            } else {
+              paState.autoDeflating = false;
+            }
+          }
+        }
+
+        if (activeTabId === "tab-pa") {
+          const P = paState.cuffPressure;
+          const PAS = paState.systolic;
+          const PAD = paState.diastolic;
+
+          updatePAVisuals(pulseWave);
+
+          if (isNewBeat && P > PAD && P < PAS) {
+            const ratio = (P - PAD) / Math.max(1, PAS - PAD);
+            playKorotkoffThud(ratio > 0.85 ? 1.0 : 0.72);
+            korotkoffSoundWaves.setAttribute("opacity", "1");
+          } else if (currPhase > 0.24) {
+            korotkoffSoundWaves.setAttribute("opacity", "0");
+          }
+
+          paState.rbcs.forEach((rbc) => {
+            if (P >= PAS) {
+              if (rbc.x > 202) rbc.x = 145 + (rbc.x % 52);
+              rbc.x += pulseWave * 1.4;
+              if (rbc.x > 202) rbc.x = 202;
+              rbc.el.setAttribute("cx", rbc.x);
+              rbc.el.setAttribute("cy", 300 + rbc.yOffset);
+            } else if (P > PAD && P < PAS) {
+              const speed = 22 + pulseWave * 245;
+              rbc.x += speed * dt;
+              if (rbc.x > 540) rbc.x = 145;
+
+              let yPos = 300 + rbc.yOffset;
+              if (rbc.x >= 210 && rbc.x <= 340) {
+                yPos = 300 + rbc.yOffset * (0.2 + pulseWave * 0.45);
+              } else if (rbc.x > 340 && rbc.x < 435) {
+                yPos = 300 + Math.sin(rbc.x * 0.35 + now * 0.02) * 8;
+              }
+              rbc.el.setAttribute("cx", rbc.x);
+              rbc.el.setAttribute("cy", yPos);
+            } else {
+              const speed = 75 + pulseWave * 95;
+              rbc.x += speed * dt;
+              if (rbc.x > 540) rbc.x = 145;
+              rbc.el.setAttribute("cx", rbc.x);
+              rbc.el.setAttribute("cy", 300 + rbc.yOffset);
+            }
+          });
+        }
+
+        if (activeTabId === "tab-spo2") {
+          const flowSpeed = spo2State.interference === "perfusion" ? 16 : 48 + pulseWave * 35;
+          spo2State.hbMolecules.forEach((mol) => {
+            mol.x += flowSpeed * dt;
+            if (mol.x > 330) mol.x = 24;
+            mol.el.setAttribute("cx", mol.x);
+            mol.el.setAttribute("cy", mol.y);
+          });
+
+          plethTimer += dt;
+          if (plethTimer >= 0.025) {
+            plethTimer = 0;
+            const baselineY = 315;
+            let waveY = baselineY;
+
+            if (spo2State.interference === "perfusion") {
+              waveY = baselineY - pulseWave * 6 + (Math.random() - 0.5) * 2;
+            } else if (spo2State.interference === "motion") {
+              waveY = baselineY - 22 + Math.sin(now * 0.03) * 22 + (Math.random() - 0.5) * 18;
+            } else {
+              const t = currPhase / beatPeriod;
+              let sig = 0;
+              if (t < 0.18) sig = Math.sin((t / 0.18) * (Math.PI / 2)) * 46;
+              else if (t < 0.35) sig = 46 - ((t - 0.18) / 0.17) * 24;
+              else if (t < 0.45) sig = 22 + Math.sin(((t - 0.35) / 0.1) * Math.PI) * 6;
+              else sig = 22 * Math.max(0, 1 - (t - 0.45) / 0.55);
+              waveY = baselineY - sig;
+            }
+
+            spo2State.plethHistory.push(waveY);
+            spo2State.plethHistory.shift();
+
+            const pts = spo2State.plethHistory
+              .map((y, idx) => `${26 + idx * 2.95},${y.toFixed(1)}`)
+              .join(" ");
+            plethPolyline.setAttribute("points", pts);
+          }
+        }
+
+        requestAnimationFrame(animateLoop);
+      }
+
+      // Inicializações
+      updatePostureSimulation();
+      buildManometerDial();
+      updateKorotkoffArc();
+      initRBCs();
+      updatePAVisuals();
+      updateTemperatureView(36.5);
+      initCapillaryMolecules();
+      updateSpo2View();
+      updateHgtView(92);
+      requestAnimationFrame(animateLoop);
+    })();
+  </script>
+</body>
+</html>
